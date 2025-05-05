@@ -133,9 +133,9 @@ elif page == "Epitope Prediction":
             df = simulate_peptide_data(sequence)
             df_features = add_features(df)
 
-           X_pred = df_features[feature_cols]
-           X_scaled = scaler.transform(X_pred)
-           df_features['prediction'] = model.predict(X_scaled)
+            X_pred = df_features[feature_cols]
+            X_scaled = scaler.transform(X_pred)
+            df_features['prediction'] = model.predict(X_scaled)
 
             try:
                 model = joblib.load("b-cell-rf_model.pkl")
