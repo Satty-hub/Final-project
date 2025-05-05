@@ -169,8 +169,8 @@ elif page == "Epitope Prediction":
                 X_pred = df_features[feature_cols]
 
                 try:
-                    model = joblib.load("b-cell_rf_model.pkl")
-                    scaler = joblib.load("b-cell_scaler.pkl")
+                    model = joblib.load("b-cell-rf_model.pkl")
+                    scaler = joblib.load("b-cell-scaler.pkl")
                     X_scaled = scaler.transform(X_pred)
                     df['prediction'] = model.predict(X_scaled)
 
