@@ -10,29 +10,18 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.preprocessing import MinMaxScaler
 from imblearn.over_sampling import SMOTE
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-import random
 import joblib
+import random
 
-# ------------------------------------------
-# STEP 1: LOAD AND CACHE DATA
-# ------------------------------------------
-#  Define the features:
+# Consistent feature list
 FEATURE_COLUMNS = [
-    'protein_seq_length',
-    'peptide_seq_length',
-    'parent_protein_id_length',
-    'peptide_length',
-    'chou_fasman',
-    'emini',
-    'kolaskar_tongaonkar',
-    'parker',
-    'isoelectric_point',
-    'aromaticity',
-    'hydrophobicity',
-    'stability'
+    'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
+    'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
+    'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
 ]
 
 @st.cache_data
+
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
     covid_url = "https://drive.google.com/uc?id=13JRk-wG8GggBTA-3J1U4R5x3nhrT7KbY&export=download"
@@ -49,9 +38,6 @@ def load_data():
 
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
-# ------------------------------------------
-# STEP 2: ADD FEATURES
-# ------------------------------------------
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -60,9 +46,6 @@ def add_features(df):
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
 
-# ------------------------------------------
-# STEP 3: PEPTIDE GENERATION
-# ------------------------------------------
 def generate_peptides(sequence, length=9):
     return [(i + 1, i + length, sequence[i:i + length]) for i in range(len(sequence) - length + 1)]
 
@@ -89,51 +72,37 @@ def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
         rows.append(row)
     return pd.DataFrame(rows)
 
-# ------------------------------------------
-# STEP 4: STREAMLIT UI
-# ------------------------------------------
+# Streamlit app
 st.set_page_config(layout="wide")
 st.title("🔬 B-cell and T-cell Epitope Predictor")
-
 page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "Epitope Prediction"])
 
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
 if page == "Data Overview":
     st.header("📊 Data Overview")
-    st.subheader("B-cell Dataset")
     st.dataframe(df_bcell.head())
-    st.subheader("T-cell Dataset")
     st.dataframe(df_tcell.head())
-    st.subheader("SARS Dataset")
-    st.dataframe(df_sars.head())
-    st.subheader("COVID Test Dataset")
-    st.dataframe(df_test.head())
 
 elif page == "Model Training":
     st.header("🤖 Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
     df = df_train_b if choice == "B-cell" else df_train_t
     df = add_features(df)
-
     df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
     df = df.dropna(subset=['target'])
 
-    X = df.drop("target", axis=1)
+    X = df[FEATURE_COLUMNS]
     Y = df["target"]
 
-    if st.checkbox("Apply SMOTE for balancing"):
-        smote = SMOTE()
-        X, Y = smote.fit_resample(X, Y)
-        st.success("✅ SMOTE applied")
+    if st.checkbox("Apply SMOTE"):
+        X, Y = SMOTE().fit_resample(X, Y)
 
     scaler = MinMaxScaler()
     X = scaler.fit_transform(X)
-    st.success("✅ Features normalized")
 
     test_size = st.slider("Test size", 0.1, 0.5, 0.25)
     random_state = st.number_input("Random seed", 0, 100, 42)
-
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
 
     if st.button("Train Random Forest"):
@@ -143,63 +112,46 @@ elif page == "Model Training":
 
         st.success("🎉 Model trained successfully!")
         st.write("Accuracy:", accuracy_score(Y_test, Y_pred))
-        st.text("Classification Report:")
         st.text(classification_report(Y_test, Y_pred))
 
         cm = confusion_matrix(Y_test, Y_pred)
         fig, ax = plt.subplots()
         sns.heatmap(cm, annot=True, fmt='d', ax=ax)
-        ax.set_xlabel("Predicted")
-        ax.set_ylabel("True")
         st.pyplot(fig)
 
-        # Save model and scaler
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
-        st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
+        st.success("✅ Model and scaler saved.")
 
 elif page == "Epitope Prediction":
-    st.header("🔎 Epitope Prediction with Model")
-    epitope_type = st.selectbox("Select Epitope Type", ["B-cell", "T-cell"])
-
-    default_seq = (
-        "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFSNVTWFHAIHV"
-        "SGTNGTKRFDNPVLPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIVNNATNVVIKVCEFQFCNDPFL"
-        "GVYYHKNNKSWMESEFRVYSSANNCTFEYVSQPFLMDLEGKQGNFKNLREFVFKNIDGYFKIYSKHTPINL"
-    )
-    sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
+    st.header("🔎 Epitope Prediction")
+    default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFSNVTWFHAIHV"
+    sequence = st.text_area("Paste Protein Sequence:", default_seq, height=150)
 
     if st.button("Generate Epitopes and Predict"):
         if sequence:
-            with st.spinner("Generating peptides and loading model..."):
-                df = simulate_peptide_data(sequence)
-                df_features = add_features(df)
+            df = simulate_peptide_data(sequence)
+            df_features = add_features(df)
+            X_pred = df_features[FEATURE_COLUMNS]
 
-                feature_cols = [
-                    'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
-                    'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
-                    'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability']
-                X_pred = df_features[feature_cols]
+            try:
+                model = joblib.load("b-cell-rf_model.pkl")
+                scaler = joblib.load("b-cell-scaler.pkl")
+                X_scaled = scaler.transform(X_pred)
+                df['prediction'] = model.predict(X_scaled)
 
-                try:
-                    model = joblib.load(f"{epitope_type.lower()}-rf_model.pkl")
-                    scaler = joblib.load(f"{epitope_type.lower()}-scaler.pkl")
-                    X_scaled = scaler.transform(X_pred)
-                    df['prediction'] = model.predict(X_scaled)
+                st.success(f"Predicted {len(df)} peptides")
+                st.dataframe(df)
 
-                    st.success(f"Predicted {len(df)} peptides")
-                    st.dataframe(df)
+                st.plotly_chart(px.histogram(df, x="peptide_length", title="Peptide Length Distribution"))
+                st.plotly_chart(px.histogram(df, x="hydrophobicity", title="Hydrophobicity Distribution"))
+                st.plotly_chart(px.histogram(df, x="isoelectric_point", title="Isoelectric Point Distribution"))
 
-                    st.subheader("📈 Peptide Property Distributions")
-                    st.plotly_chart(px.histogram(df, x="peptide_length", title="Peptide Length"))
-                    st.plotly_chart(px.histogram(df, x="hydrophobicity", title="Hydrophobicity"))
-                    st.plotly_chart(px.histogram(df, x="isoelectric_point", title="Isoelectric Point"))
+                csv = df.to_csv(index=False)
+                st.download_button("Download Predictions as CSV", csv, "predicted_epitopes.csv")
 
-                    csv = df.to_csv(index=False)
-                    st.download_button("Download CSV", data=csv, file_name="predicted_epitopes.csv")
-
-                except Exception as e:
-                    st.error(f"❗ Model and Scaler files missing or error: {e}")
+            except Exception as e:
+                st.error(f"❗ Model and Scaler files missing or error: {e}")
         else:
             st.error("❗ Please enter a valid sequence.")
 
