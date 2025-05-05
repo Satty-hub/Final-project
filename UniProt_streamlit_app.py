@@ -1,90 +1,67 @@
-# Epitope Prediction App using protein_id from UniProt
-# 1. Import all the required libraries here
+# Import all the required library for this project
 import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import plotly.express as px
+from Bio import Entrez
+from Bio import SeqIO
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import random
 import requests
-from io import StringIO
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.preprocessing import MinMaxScaler
 from imblearn.over_sampling import SMOTE
-from Bio.SeqUtils.ProtParam import ProteinAnalysis
-from Bio import SeqIO
-import joblib
-import random
-from Bio.SeqUtils import seq1
+import plotly.express as px
 
-# 2. upload the data for  training. I have used SARS_CoV-2 data for training.
-@st.cache_data
-def load_data():
-    bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
-    covid_url = "https://drive.google.com/uc?id=13JRk-wG8GggBTA-3J1U4R5x3nhrT7KbY&export=download"
-    sars_url = "https://drive.google.com/uc?id=1hlza1PsXkHiBqzhpZpVKcLDlLUs4aQtj&export=download"
-    Tcell_url = "https://drive.google.com/uc?id=1wYhEDx7pRxiHzD58R2ihfDrSp5Bu68cc&export=download"
+# Step 1:Fetch Protein Sequence or accession_id from UniProt API for your gene of interest.
 
-    df_bcell = pd.read_csv(bcell_url)
-    df_tcell = pd.read_csv(Tcell_url)
-    df_sars = pd.read_csv(sars_url)
-    df_test = pd.read_csv(covid_url)
+def get_uniprot_sequence(protein_id):
+    """
+    Fetch the protein sequence from UniProt based on the given UniProt ID.
+    """
+    base_url = f'https://www.uniprot.org/uniprot/{protein_id}.fasta'
+    response = requests.get(base_url)
 
-    df_train_b = pd.concat([df_bcell, df_sars])
-    df_train_t = pd.concat([df_tcell, df_sars])
+    if response.status_code == 200:
+        fasta_data = response.text
+        sequence = "".join(fasta_data.split("\n")[1:])  # Remove header line
+        return sequence
+    else:
+        st.error("Failed to fetch the sequence from UniProt. Please check the protein ID.")
+        return None
 
-    return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
-
-# 3. Include all the peptide features to the dataset
-
-def add_features(df):
-    df = df.copy()
-    df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
-    df['peptide_seq_length'] = df['peptide_seq'].astype(str).map(len)
-    df['parent_protein_id_length'] = df['parent_protein_id'].astype(str).map(len)
-    df['peptide_length'] = df['end_position'] - df['start_position'] + 1
-    return df
-
-# 4. Predict and generate overlapping peptides of lengths 9 to 14
+# Step 2: Create or define the python function to generate the peptide sequence 
 
 def generate_peptides(sequence, min_length=9, max_length=14):
+    """
+    Generate peptides from the given sequence by sliding window approach.
+    """
     peptides = []
     for length in range(min_length, max_length + 1):
         for i in range(len(sequence) - length + 1):
             peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
 
-# 5. Testing the Simulate peptide dataset
+# Step 3: After defining the function based on the features, Simulate Peptide Data
 
-# List of valid amino acids
-VALID_AMINO_ACIDS = set('ACDEFGHIKLMNPQRSTVWY')
-
-def clean_peptide_sequence(peptide):
-    # Convert the sequence to one-letter amino acid codes and filter out invalid characters
-    cleaned_peptide = ''.join([aa for aa in seq1(peptide) if aa in VALID_AMINO_ACIDS])
-    return cleaned_peptide
-
-def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
+def simulate_peptide_data(seq, parent_id="Unknown"):
+    """
+    Simulate peptide data by analyzing the sequence and computing different features.
+    """
     peptides = generate_peptides(seq)
     rows = []
     for start, end, pep in peptides:
-        # Clean the peptide sequence to ensure it contains only valid amino acids
-        cleaned_pep = clean_peptide_sequence(pep)
-        
-        # If the sequence is empty or contains only invalid amino acids, skip it
-        if not cleaned_pep:
-            continue
-        
-        # Now pass the cleaned peptide to ProteinAnalysis
-        analysis = ProteinAnalysis(cleaned_pep)
+        analysis = ProteinAnalysis(pep)
         row = {
             "parent_protein_id": parent_id,
             "protein_seq": seq,
             "start_position": start,
             "end_position": end,
-            "peptide_seq": cleaned_pep,
+            "peptide_seq": pep,
             "chou_fasman": round(random.uniform(0.2, 1.0), 3),
             "emini": round(random.uniform(0.5, 2.5), 3),
             "kolaskar_tongaonkar": round(random.uniform(0.8, 1.2), 3),
@@ -97,94 +74,117 @@ def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
         rows.append(row)
     return pd.DataFrame(rows)
 
-# 6. Put your protein_d and fetch sequence from UniProt
+# Step 4: Model Training and Prediction of the epitope
 
-def fetch_protein_sequence_uniprot(protein_id):
-    url = f"https://www.uniprot.org/uniprot/{protein_id}.fasta"
-    response = requests.get(url)
-    if response.status_code != 200:
-        return None
-    fasta_io = StringIO(response.text)
-    record = SeqIO.read(fasta_io, "fasta")
-    return str(record.seq)
+def add_features(df):
+    """
+    Add feature columns like sequence lengths and various computed properties.
+    """
+    df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
+    df['peptide_seq_length'] = df['peptide_seq'].astype(str).map(len)
+    df['parent_protein_id_length'] = df['parent_protein_id'].astype(str).map(len)
+    df['peptide_length'] = df['end_position'] - df['start_position'] + 1
+    return df
 
-# 7. Once you define all the feature and source of data to fetch then set the code for Streamlit 
+# Step 5: Run the Model training in the app (if necessary)
 
-st.set_page_config(layout="wide")
-st.title("🔬 Epitope Prediction from Protein Sequences")
-page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "Epitope Prediction"])
-df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
-
-if page == "Data Overview":
-    st.header("📊 Data Overview")
-    st.dataframe(df_bcell.head())
-
-elif page == "Model Training":
-    st.header("🤖 Train Your Model")
-    choice = st.selectbox("Select Dataset", ["B-cell", "T-cell"])
-    df = df_train_b if choice == "B-cell" else df_train_t
+def train_model(df):
+    """
+    Train a Random Forest model using features derived from the peptide data.
+    """
     df = add_features(df)
-
     FEATURE_COLUMNS = [
         'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
         'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
         'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
     ]
-
-    df = df.dropna(subset=['target'])
+    
     X = df[FEATURE_COLUMNS]
-    Y = df['target']
+    Y = df["target"]  # Assuming there's a 'target' column for classification
 
-    if st.checkbox("Apply SMOTE"):
-        smote = SMOTE()
-        X, Y = smote.fit_resample(X, Y)
-
+    # Feature scaling
     scaler = MinMaxScaler()
-    X = scaler.fit_transform(X)
+    X_scaled = scaler.fit_transform(X)
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, random_state=42)
+    # Train-Test Split
+    X_train, X_test, Y_train, Y_test = train_test_split(X_scaled, Y, test_size=0.2, random_state=42)
 
-    if st.button("Train Model"):
-        model = RandomForestClassifier(n_estimators=500, random_state=42)
-        model.fit(X_train, Y_train)
-        joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
-        joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
-        st.success("Model trained and saved.")
+    # Train the model
+    
+    model = RandomForestClassifier(n_estimators=100)
+    model.fit(X_train, Y_train)
 
-elif page == "Epitope Prediction":
-    st.header("🔎 Predict B-cell Epitopes")
-    protein_id = st.text_input("Enter UniProt Accession ID (e.g. P0DTC2):")
+    # Evaluate of the model after training
+    
+    Y_pred = model.predict(X_test)
+    accuracy = accuracy_score(Y_test, Y_pred)
+    st.write(f"Model Accuracy: {accuracy * 100:.2f}%")
+    st.text("Classification Report:")
+    st.text(classification_report(Y_test, Y_pred))
 
-    sequence = ""
+    # Once you train and evaluate save the model for future use
+    
+    joblib.dump(model, 'epitope_prediction_model.pkl')
+    joblib.dump(scaler, 'scaler.pkl')
+
+# Step 6: Streamlit Interface for User Input
+st.set_page_config(layout="wide")
+st.title("🔬 Epitope Prediction and Visualization Tool")
+
+page = st.sidebar.radio("Navigation", ["Predict Epitope", "Model Training"])
+
+# Creat the Epitope prediction page
+
+if page == "Predict Epitope":
+    st.header("🔍 Predict Epitope from UniProt ID")
+
+    protein_id = st.text_input("Enter UniProt Protein ID (e.g., P0DTC2):")
+
     if protein_id:
-        sequence = fetch_protein_sequence_uniprot(protein_id)
+        sequence = get_uniprot_sequence(protein_id)
+        
         if sequence:
-            st.success("Sequence retrieved from UniProt.")
-        else:
-            st.error("Could not retrieve sequence. Check ID.")
+            st.write(f"Protein Sequence for {protein_id}:")
+            st.text(sequence)
 
-    sequence = st.text_area("Or paste sequence here:", value=sequence, height=150)
-
-    if st.button("Predict Epitopes"):
-        if sequence:
-            df = simulate_peptide_data(sequence)
+            df = simulate_peptide_data(sequence, parent_id=protein_id)
             df_features = add_features(df)
-            feature_cols = [
+
+            FEATURE_COLUMNS = [
                 'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
                 'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
                 'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
             ]
-            X_pred = df_features[feature_cols]
+            X_pred = df_features[FEATURE_COLUMNS]
 
-            try:
-                model = joblib.load("b-cell-rf_model.pkl")
-                scaler = joblib.load("b-cell-scaler.pkl")
-                X_scaled = scaler.transform(X_pred)
-                preds = model.predict(X_scaled)
+            # Load trained model
+            
+            model = joblib.load('epitope_prediction_model.pkl')
+            scaler = joblib.load('scaler.pkl')
 
-                df_features['prediction'] = preds
-                st.dataframe(df_features[df_features['prediction'] == 1])
+            # Predict
+            
+            X_pred_scaled = scaler.transform(X_pred)
+            predictions = model.predict(X_pred_scaled)
 
-                st.download_button("Download Predictions", data=df_features.to_csv(index=False), file_name="predicted_epitopes.csv")
-            except Exception as e:
-                st.error(f"Model loading or prediction error: {e}")
+            df['Prediction'] = predictions
+            st.write(df)
+
+            # Visualize Predictions
+            
+            fig = plt.figure(figsize=(10, 6))
+            sns.countplot(x='Prediction', data=df)
+            st.pyplot(fig)
+
+            st.write("🔬 Peptides and Predicted Epitopes have been displayed.")
+
+# Model Training Page
+
+elif page == "Model Training":
+    st.header("🤖 Train Epitope Prediction Model")
+
+    # Load and show datasets
+    if st.button("Train Model"):
+        st.write("Training model with the B-cell/T-cell data...")
+        # Assume you have a pre-existing dataset (example 'df_train_b')
+        # train_model(df_train_b)  # Replace with your training data
