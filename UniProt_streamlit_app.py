@@ -39,7 +39,6 @@ def load_data():
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
-    df['peptide_seq_length'] = df['peptide_seq'].astype(str).map(len)
     df['parent_protein_id_length'] = df['parent_protein_id'].astype(str).map(len)
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
@@ -108,7 +107,7 @@ def fetch_sequence_from_uniprot(uniprot_id):
 st.set_page_config(layout="wide")
 st.title("B-cell and T-cell Epitope Predictor")
 
-page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "Epitope Prediction"])
+page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "T cell epitope predictor", "B cell epitope predictor"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
 if page == "Data Overview":
@@ -136,7 +135,7 @@ elif page == "Model Training":
     df = add_features(df)
 
     FEATURE_COLUMNS = [
-        'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
+        'protein_seq_length', 'parent_protein_id_length',
         'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
         'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
     ]
@@ -207,7 +206,7 @@ elif page == "Epitope Prediction":
             df_features = add_features(df)
 
             feature_cols = [
-                'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
+                'protein_seq_length', 'parent_protein_id_length',
                 'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
                 'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
             ]
