@@ -93,11 +93,6 @@ if page == "Data Overview":
     st.dataframe(df_sars.head())
     st.subheader("COVID Test Dataset")
     st.dataframe(df_test.head())
-    st.subheader("Processed Training Data")
-    if st.checkbox("Show B-cell Preprocessing"):
-        st.dataframe(add_features(df_train_b).head())
-    if st.checkbox("Show T-cell Preprocessing"):
-        st.dataframe(add_features(df_train_t).head())
 
 elif page == "Model Training":
     st.header("🤖 Model Training")
@@ -145,10 +140,12 @@ elif page == "Model Training":
         # Save model and scaler
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
-        st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl 'and' {choice.lower()}-scaler.pkl'")
+        st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
 elif page == "Epitope Prediction":
     st.header("🔎 Epitope Prediction with Model")
+    epitope_type = st.selectbox("Select Epitope Type", ["B-cell", "T-cell"])
+
     default_seq = (
         "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFSNVTWFHAIHV"
         "SGTNGTKRFDNPVLPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIVNNATNVVIKVCEFQFCNDPFL"
@@ -169,8 +166,8 @@ elif page == "Epitope Prediction":
                 X_pred = df_features[feature_cols]
 
                 try:
-                    model = joblib.load("b-cell-rf_model.pkl")
-                    scaler = joblib.load("b-cell-scaler.pkl")
+                    model = joblib.load(f"{epitope_type.lower()}-rf_model.pkl")
+                    scaler = joblib.load(f"{epitope_type.lower()}-scaler.pkl")
                     X_scaled = scaler.transform(X_pred)
                     df['prediction'] = model.predict(X_scaled)
 
@@ -189,3 +186,4 @@ elif page == "Epitope Prediction":
                     st.error(f"❗ Model and Scaler files missing or error: {e}")
         else:
             st.error("❗ Please enter a valid sequence.")
+
