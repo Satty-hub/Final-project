@@ -112,7 +112,7 @@ if page == "Data Overview":
         num_vars = [x for x in df_train_b.columns if df_train_b[x].dtypes != 'O']
         num_vars = [x for x in df_train_t.columns if df_train_t[x].dtypes != 'O']
         for i in num_vars:
-            fig = px.box(df_train_b,df_train_t y=i, color='target')
+            fig = px.box(df_train_b, df_train_t y=i, color='target')
             st.plotly_chart(fig)
 
 elif page == "Model Training":
