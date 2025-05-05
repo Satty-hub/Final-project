@@ -1,8 +1,5 @@
 # This Python (Pandas) code can be used to predict the Tcell and B cell epitoe using Uni_prot ID or Protein sequence
 # # Import all required libraries
-# -------------------------------------------
-# 📌 IMPORTING REQUIRED LIBRARIES
-# -------------------------------------------
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -21,9 +18,8 @@ import requests
 import random
 import joblib
 
-# -------------------------------------------
-# 📥 LOAD DATA
-# -------------------------------------------
+# Uploaded the data. I use sars data to train the model for both b cell and tcells. I got the epitope data from IEDB.
+
 @st.cache_data
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
@@ -41,9 +37,8 @@ def load_data():
 
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
-# -------------------------------------------
-# 🧬 FEATURE ENGINEERING
-# -------------------------------------------
+# Adding the feature and modification
+
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -52,9 +47,9 @@ def add_features(df):
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
 
-# -------------------------------------------
-# 🔄 PREDICTION PEPTIDES + IMMUNOGENICITY
-# -------------------------------------------
+#   Definethe function for peptide prediction and immnunogenicity
+# 
+
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
@@ -99,18 +94,16 @@ def fetch_sequence_from_uniprot(uniprot_id):
     else:
         return None, None
 
-# -------------------------------------------
-# 🚀 STREAMLIT APP CONFIGURATION
-# -------------------------------------------
+# Set the Streamlit app configuration
+
 st.set_page_config(layout="wide")
 st.title("🔬 B-cell and T-cell Epitope Predictor")
 
 page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "Epitope Prediction"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
-# -------------------------------------------
-# 📊 DATA OVERVIEW
-# -------------------------------------------
+# Data visualization and features
+
 if page == "Data Overview":
     st.header("📊 Data Overview")
     st.subheader("B-cell Dataset")
@@ -127,9 +120,8 @@ if page == "Data Overview":
     if st.checkbox("Show T-cell Preprocessing"):
         st.dataframe(add_features(df_train_t).head())
 
-# -------------------------------------------
-# 🤖 MODEL TRAINING
-# -------------------------------------------
+# Train the model for prediction
+
 elif page == "Model Training":
     st.header("🤖 Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -151,11 +143,11 @@ elif page == "Model Training":
     if st.checkbox("Apply SMOTE for balancing"):
         smote = SMOTE()
         X, Y = smote.fit_resample(X, Y)
-        st.success("✅ SMOTE applied")
+        st.success(" SMOTE applied")
 
     scaler = MinMaxScaler()
     X = scaler.fit_transform(X)
-    st.success("✅ Features normalized")
+    st.success(" Features normalized")
 
     test_size = st.slider("Test size", 0.1, 0.5, 0.25)
     random_state = st.number_input("Random seed", 0, 100, 42)
@@ -167,7 +159,7 @@ elif page == "Model Training":
         model.fit(X_train, Y_train)
         Y_pred = model.predict(X_test)
 
-        st.success("🎉 Model trained successfully!")
+        st.success(" Model trained successfully!")
         st.write("Accuracy:", accuracy_score(Y_test, Y_pred))
         st.text("Classification Report:")
         st.text(classification_report(Y_test, Y_pred))
@@ -183,9 +175,9 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
-# -------------------------------------------
-# 🔍 EPITOPE PREDICTION
-# -------------------------------------------
+# Define the function for Epitope prediction
+
+
 if page == "Epitope Prediction":
     st.header("🔎 Epitope Prediction with Model")
     
@@ -225,10 +217,10 @@ if page == "Epitope Prediction":
 
                 df_features['prediction'] = predictions
 
-                st.success(f"✅ Predicted {len(df_features)} peptides.")
+                st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                st.subheader("📈 Peptide Feature Distributions")
+                st.subheader("Peptide Feature Distributions")
                 for col in ['peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability', 'aromaticity', 'emini', 'kolaskar_tongaonkar', 'immunogenicity_score']:
                     st.plotly_chart(px.histogram(df_features, x=col, title=col))
 
@@ -236,5 +228,5 @@ if page == "Epitope Prediction":
                 st.download_button("Download CSV", data=csv, file_name="predicted_epitopes.csv")
 
             except Exception as e:
-                st.error(f"❗ Model or scaler error: {e}")
+                st.error(f"Model or scaler error: {e}")
 
