@@ -99,7 +99,7 @@ if page == "Data Overview":
     if st.checkbox("Show T-cell Preprocessing"):
         st.dataframe(add_features(df_train_t).head())
 
-# Trainn the model beforw prediction
+# Train the model before prediction
 
 elif page == "Model Training":
     st.header("🤖 Model Training")
@@ -174,12 +174,13 @@ elif page == "Epitope Prediction":
                 df = simulate_peptide_data(sequence)
                 df_features = add_features(df)
 
-                # Use the correct feature columns
+                # Correct feature columns (remove peptide_length)
                 feature_cols = [
                     'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
-                    'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
+                    'chou_fasman', 'emini', 'kolaskar_tongaonkar',
                     'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
                 ]
+                # Make sure we only use the correct features for prediction
                 X_pred = df_features[feature_cols]
 
                 try:
@@ -203,4 +204,5 @@ elif page == "Epitope Prediction":
                     st.error(f"❗ Model and Scaler files missing or error: {e}")
         else:
             st.error("❗ Please enter a valid sequence.")
+
 
