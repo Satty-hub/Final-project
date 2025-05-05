@@ -16,6 +16,22 @@ import joblib
 # ------------------------------------------
 # STEP 1: LOAD AND CACHE DATA
 # ------------------------------------------
+#  Define the features:
+FEATURE_COLUMNS = [
+    'protein_seq_length',
+    'peptide_seq_length',
+    'parent_protein_id_length',
+    'peptide_length',
+    'chou_fasman',
+    'emini',
+    'kolaskar_tongaonkar',
+    'parker',
+    'isoelectric_point',
+    'aromaticity',
+    'hydrophobicity',
+    'stability'
+]
+
 @st.cache_data
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
