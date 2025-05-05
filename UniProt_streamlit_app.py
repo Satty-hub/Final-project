@@ -1,5 +1,6 @@
 # This Python (Pandas) code can be used to predict the Tcell and B cell epitoe using Uni_prot ID or Protein sequence
 # # Import all required libraries
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -248,4 +249,3 @@ st.metric("Total Epitope Length", f"{total_epitope_size:.2f}")
 # Bar chart of epitope length distribution
 st.plotly_chart(px.histogram(positive_preds, x='peptide_length', nbins=10,
                              title=f'{model_type} Epitope Length Distribution'))
-
