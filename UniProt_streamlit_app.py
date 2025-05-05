@@ -56,28 +56,38 @@ def generate_peptides(sequence, min_length=8, max_length=11):
 # Step 4: Simulate data with features
 
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
+    valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
     rows = []
+
     for start, end, pep in peptides:
-        analysis = ProteinAnalysis(pep)
-        row = {
-            "organism": organism,
-            "parent_protein_id": parent_id,
-            "protein_seq": seq,
-            "start_position": start,
-            "end_position": end,
-            "peptide_seq": pep,
-            "chou_fasman": round(random.uniform(0.2, 1.0), 3),
-            "emini": round(random.uniform(0.5, 2.5), 3),
-            "kolaskar_tongaonkar": round(random.uniform(0.8, 1.2), 3),
-            "parker": round(random.uniform(0.5, 3.0), 3),
-            "isoelectric_point": round(analysis.isoelectric_point(), 2),
-            "aromaticity": round(analysis.aromaticity(), 3),
-            "hydrophobicity": round(analysis.gravy(), 3),
-            "stability": round(analysis.instability_index(), 2),
-            "immunogenicity_score": round(random.uniform(0.0, 1.0), 3)
-        }
-        rows.append(row)
+        # Skip peptides with invalid amino acids
+        if not set(pep).issubset(valid_aa):
+            continue
+        try:
+            analysis = ProteinAnalysis(pep)
+            row = {
+                "organism": organism,
+                "parent_protein_id": parent_id,
+                "protein_seq": seq,
+                "start_position": start,
+                "end_position": end,
+                "peptide_seq": pep,
+                "chou_fasman": round(random.uniform(0.2, 1.0), 3),
+                "emini": round(random.uniform(0.5, 2.5), 3),
+                "kolaskar_tongaonkar": round(random.uniform(0.8, 1.2), 3),
+                "parker": round(random.uniform(0.5, 3.0), 3),
+                "isoelectric_point": round(analysis.isoelectric_point(), 2),
+                "aromaticity": round(analysis.aromaticity(), 3),
+                "hydrophobicity": round(analysis.gravy(), 3),
+                "stability": round(analysis.instability_index(), 2),
+                "immunogenicity_score": round(random.uniform(0.0, 1.0), 3)
+            }
+            rows.append(row)
+        except Exception as e:
+            # Skip peptides that still cause errors
+            continue
+
     return pd.DataFrame(rows)
 
 # Step 5: Fetch sequence from UniProt
