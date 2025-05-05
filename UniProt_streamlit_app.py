@@ -230,3 +230,22 @@ if page == "Epitope Prediction":
             except Exception as e:
                 st.error(f"Model or scaler error: {e}")
 
+     # Count of predicted positive epitopes (B-cell or T-cell)
+positive_preds = df_features[df_features['prediction'] == 1]
+
+# Number of predicted epitopes
+num_epitopes = len(positive_preds)
+
+# Average and total epitope size
+avg_epitope_size = positive_preds['peptide_length'].mean()
+total_epitope_size = positive_preds['peptide_length'].sum()
+
+st.subheader(f"📊 {model_type} Epitope Summary")
+st.metric("Number of Predicted Epitopes", num_epitopes)
+st.metric("Average Epitope Length", f"{avg_epitope_size:.2f}")
+st.metric("Total Epitope Length", f"{total_epitope_size:.2f}")
+
+# Bar chart of epitope length distribution
+st.plotly_chart(px.histogram(positive_preds, x='peptide_length', nbins=10,
+                             title=f'{model_type} Epitope Length Distribution'))
+
