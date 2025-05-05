@@ -1,10 +1,9 @@
-pandas-profiling[notebook,html]
-pycaret
-scikit-learn
 pandas
 numpy
 matplotlib
 seaborn
 plotly
-imbalanced-learn
+scikit-learn
+imblearn
+pycaret
 biopython
