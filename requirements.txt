@@ -1,4 +1,4 @@
-!pip install pandas-profiling[notebook,html]
+ pandas-profiling[notebook,html]
 !pip install pycaret
 !pip install sklearn
 import pandas as pd
