@@ -58,13 +58,26 @@ def generate_peptides(sequence, min_length=9, max_length=14):
 
 # 5. Testing the Simulate peptide dataset
 
+# List of valid amino acids
+VALID_AMINO_ACIDS = set('ACDEFGHIKLMNPQRSTVWY')
+
+def clean_peptide_sequence(peptide):
+    # Convert the sequence to one-letter amino acid codes and filter out invalid characters
+    cleaned_peptide = ''.join([aa for aa in seq1(peptide) if aa in VALID_AMINO_ACIDS])
+    return cleaned_peptide
+
 def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
     peptides = generate_peptides(seq)
     rows = []
     for start, end, pep in peptides:
-        # Clean the peptide sequence using seq1 (ensures it only contains valid amino acids)
-        cleaned_pep = seq1(pep)  # Converts the sequence to single-letter codes and removes invalid characters
+        # Clean the peptide sequence to ensure it contains only valid amino acids
+        cleaned_pep = clean_peptide_sequence(pep)
         
+        # If the sequence is empty or contains only invalid amino acids, skip it
+        if not cleaned_pep:
+            continue
+        
+        # Now pass the cleaned peptide to ProteinAnalysis
         analysis = ProteinAnalysis(cleaned_pep)
         row = {
             "parent_protein_id": parent_id,
