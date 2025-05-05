@@ -46,8 +46,12 @@ def add_features(df):
 
 # Generate the peptide sequence by simulating the data.  Define the function.
 
-def generate_peptides(sequence, length=9-14):
-    return [(i + 1, i + length, sequence[i:i + length]) for i in range(len(sequence) - length + 1)]
+def generate_peptides(sequence, min_length=9, max_length=14):
+    peptides = []
+    for length in range(min_length, max_length + 1):
+        for i in range(len(sequence) - length + 1):
+            peptides.append((i + 1, i + length, sequence[i:i + length]))
+    return peptides
 
 def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
     peptides = generate_peptides(seq)
