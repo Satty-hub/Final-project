@@ -128,6 +128,7 @@ if page == "Data Overview":
         st.dataframe(add_features(df_train_t).head())
 
 #  Train the model for prediction
+
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -198,72 +199,56 @@ elif page == "Epitope Prediction":
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
 
-    df_all = {}
-    for model_type in ["B-cell", "T-cell"]:
-        if sequence.strip() != "":
-            df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
-            df_features = add_features(df)
+    if st.button("Generate Epitopes and Predict"):
+    if sequence.strip() != "":
+        df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
+        df_features = add_features(df)
 
-            feature_cols = [
-                'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
-                'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
-                'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
+        feature_cols = [
+            'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
+            'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
+            'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
+        ]
+
+        try:
+            model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
+            scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
+
+            X_pred = df_features[feature_cols]
+            X_scaled = scaler.transform(X_pred)
+            predictions = model.predict(X_scaled)
+
+            df_features['prediction'] = predictions
+
+            st.success(f"Predicted {len(df_features)} peptides.")
+            st.dataframe(df_features)
+
+            st.subheader("📈 Peptide Feature Distributions")
+            feature_cols_to_plot = [
+                'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
+                'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
+                'parker', 'immunogenicity_score'
             ]
 
-            try:
-                model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
-                scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
+            for col in feature_cols_to_plot:
+                if col in df_features.columns:
+                    fig = px.histogram(df_features, x=col, nbins=20, title=f'Distribution of {col}')
+                    st.plotly_chart(fig, use_container_width=True)
 
-                X_pred = df_features[feature_cols]
-                X_scaled = scaler.transform(X_pred)
-                predictions = model.predict(X_scaled)
+            # Positive predictions stats
+            positive_preds = df_features[df_features['prediction'] == 1]
+            st.subheader(f"📊 {model_type} Epitope Summary")
+            st.metric("Number of Predicted Epitopes", len(positive_preds))
+            st.metric("Average Epitope Length", f"{positive_preds['peptide_length'].mean():.2f}")
+            st.metric("Total Epitope Length", f"{positive_preds['peptide_length'].sum():.2f}")
 
-                df_features['prediction'] = predictions
-                df_all[model_type] = df_features
+            # Epitope length histogram
+            st.plotly_chart(px.histogram(positive_preds, x='peptide_length', nbins=10,
+                                         title=f'{model_type} Epitope Length Distribution'))
 
-                st.subheader(f"{model_type} Epitope Predictions")
-                st.dataframe(df_features)
-                st.plotly_chart(px.histogram(df_features, x="immunogenicity_score", title="Immunogenicity Score"))
-                st.download_button(f"Download {model_type} Predictions", df_features.to_csv(index=False, encoding='utf-8-sig'), f"{model_type}_predicted.csv")
+            # Allow file download
+            csv = df_features.to_csv(index=False)
+            st.download_button("Download Predicted CSV", data=csv, file_name="predicted_epitopes.csv")
 
-            except Exception as e:
-                st.error(f"{model_type} Model error: {e}")
-
-    if "B-cell" in df_all and "T-cell" in df_all:
-        b_pos = df_all["B-cell"][df_all["B-cell"]['prediction'] == 1]
-        t_pos = df_all["T-cell"][df_all["T-cell"]['prediction'] == 1]
-
-        comp_df = pd.DataFrame({
-            "Model": ["B-cell", "T-cell"],
-            "Number of Epitopes": [len(b_pos), len(t_pos)],
-            "Avg Epitope Length": [b_pos['peptide_length'].mean(), t_pos['peptide_length'].mean()],
-            "Avg Immunogenicity": [b_pos['immunogenicity_score'].mean(), t_pos['immunogenicity_score'].mean()]
-        })
-
-        st.subheader("Combined Comparison of B-cell and T-cell Predictions")
-        st.dataframe(comp_df)
-
-        st.plotly_chart(px.bar(comp_df, x="Model", y=["Number of Epitopes", "Avg Epitope Length", "Avg Immunogenicity"],
-                               barmode='group', title="B-cell vs T-cell Comparison"))
-    st.subheader("Peptide Feature Distributions")
-
-feature_cols_to_plot = [
-    'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
-    'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
-    'parker', 'immunogenicity_score'
-]
-
-for col in feature_cols_to_plot:
-    if col in df_features.columns:
-        fig = px.histogram(df_features, x=col, nbins=20, title=f'Distribution of {col}')
-        st.plotly_chart(fig, use_container_width=True)
-
-st.subheader("Comparison of Positive vs. Negative Predictions")
-
-for col in feature_cols_to_plot:
-    if col in df_features.columns:
-        fig = px.histogram(df_features, x=col, color='prediction',
-                           barmode='overlay', nbins=20,
-                           title=f'{col} Distribution by Prediction')
-        st.plotly_chart(fig, use_container_width=True)
-
+        except Exception as e:
+            st.error(f"Prediction failed: {e}")
