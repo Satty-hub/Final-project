@@ -181,7 +181,7 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
-# Epitope prediction model training 
+# Epitope prediction model training
 
 elif page == "Epitope Prediction":
     st.header("Epitope Prediction with Model")
@@ -199,33 +199,62 @@ elif page == "Epitope Prediction":
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
 
-    if st.button("Generate Epitopes and Predict"):
-    if sequence.strip() != "":
-        df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
-        df_features = add_features(df)
+    if st.button("Generate Epitopes and Predict"):  # Button to trigger the prediction
+        if sequence.strip() != "":  # Ensure sequence is not empty
+            df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
+            df_features = add_features(df)
 
-        feature_cols = [
-            'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
-            'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
-            'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
-        ]
+            feature_cols = [
+                'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
+                'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
+                'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
+            ]
 
-        try:
-            model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
-            scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
+            try:
+                # Load the pre-trained model and scaler
+                model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
+                scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
 
-            X_pred = df_features[feature_cols]
-            X_scaled = scaler.transform(X_pred)
-            predictions = model.predict(X_scaled)
+                X_pred = df_features[feature_cols]
+                X_scaled = scaler.transform(X_pred)
+                predictions = model.predict(X_scaled)
 
-            df_features['prediction'] = predictions
+                df_features['prediction'] = predictions
 
-            st.success(f"Predicted {len(df_features)} peptides.")
-            st.dataframe(df_features)
+                # Display success message and the predictions table
+                st.success(f"Predicted {len(df_features)} peptides.")
+                st.dataframe(df_features)
 
-            st.subheader("📈 Peptide Feature Distributions")
-            feature_cols_to_plot = [
-                'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
+                # Feature distributions visualization
+                st.subheader("📈 Peptide Feature Distributions")
+                feature_cols_to_plot = [
+                    'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
+                    'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
+                    'parker', 'immunogenicity_score'
+                ]
+
+                for col in feature_cols_to_plot:
+                    if col in df_features.columns:
+                        fig = px.histogram(df_features, x=col, nbins=20, title=f'Distribution of {col}')
+                        st.plotly_chart(fig, use_container_width=True)
+
+                # Positive predictions stats
+                positive_preds = df_features[df_features['prediction'] == 1]
+                st.subheader(f"📊 {model_type} Epitope Summary")
+                st.metric("Number of Predicted Epitopes", len(positive_preds))
+                st.metric("Average Epitope Length", f"{positive_preds['peptide_length'].mean():.2f}")
+                st.metric("Total Epitope Length", f"{positive_preds['peptide_length'].sum():.2f}")
+
+                # Epitope length histogram
+                st.plotly_chart(px.histogram(positive_preds, x='peptide_length', nbins=10,
+                                             title=f'{model_type} Epitope Length Distribution'))
+
+                # Allow file download for the predicted epitopes
+                csv = df_features.to_csv(index=False)
+                st.download_button("Download Predicted CSV", data=csv, file_name="predicted_epitopes.csv")
+
+            except Exception as e:
+                st.error(f"Prediction failed: {e}")
                 'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
                 'parker', 'immunogenicity_score'
             ]
