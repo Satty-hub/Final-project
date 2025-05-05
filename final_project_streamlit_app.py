@@ -1,3 +1,6 @@
+# ------------------------------------------
+# STEP 0: IMPORT LIBRARIES
+# ------------------------------------------
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -12,36 +15,43 @@ from imblearn.over_sampling import SMOTE
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import random
 
-st.title("T-cell Epitope Predictor")
-
-# Sidebar for navigation
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Data Overview", "Model Training", "Epitope Prediction"])
-
-# Load data function
+# ------------------------------------------
+# STEP 1: LOAD AND CACHE DATA
+# ------------------------------------------
 @st.cache_data
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
     covid_url = "https://drive.google.com/uc?id=13JRk-wG8GggBTA-3J1U4R5x3nhrT7KbY&export=download"
     sars_url = "https://drive.google.com/uc?id=1hlza1PsXkHiBqzhpZpVKcLDlLUs4aQtj&export=download"
     Tcell_url = "https://drive.google.com/uc?id=1wYhEDx7pRxiHzD58R2ihfDrSp5Bu68cc&export=download"
-    
-    df_1 = pd.read_csv(bcell_url)   # bcells csv
-    df_2 = pd.read_csv(Tcell_url)   # tcells csv
-    df_3 = pd.read_csv(sars_url)    # sars csv
-    df_test = pd.read_csv(covid_url) # covid csv
-    
-    df_train_b = pd.concat([df_1, df_3])
-    df_train_t = pd.concat ([df_2,df_3])
-    
-    
-    return df_1, df_2, df_3, df_test, df_train_b, df_train_t
 
-# Function to generate peptides
+    df_bcell = pd.read_csv(bcell_url)
+    df_tcell = pd.read_csv(Tcell_url)
+    df_sars = pd.read_csv(sars_url)
+    df_test = pd.read_csv(covid_url)
+
+    df_train_b = pd.concat([df_bcell, df_sars])
+    df_train_t = pd.concat([df_tcell, df_sars])
+
+    return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
+
+# ------------------------------------------
+# STEP 2: ADD FEATURES TO DATA
+# ------------------------------------------
+def add_features(df):
+    df = df.copy()
+    df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
+    df['peptide_seq_length'] = df['peptide_seq'].astype(str).map(len)
+    df['parent_protein_id_length'] = df['parent_protein_id'].astype(str).map(len)
+    df['peptide_length'] = df['end_position'] - df['start_position'] + 1
+    return df
+
+# ------------------------------------------
+# STEP 3: EPITOPE GENERATION (SIMULATED)
+# ------------------------------------------
 def generate_peptides(sequence, length=9):
     return [(i + 1, i + length, sequence[i:i + length]) for i in range(len(sequence) - length + 1)]
 
-# Function to simulate peptide data
 def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
     peptides = generate_peptides(seq)
     rows = []
@@ -65,165 +75,125 @@ def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
         rows.append(row)
     return pd.DataFrame(rows)
 
+# ------------------------------------------
+# STEP 4: APP LAYOUT
+# ------------------------------------------
+st.set_page_config(layout="wide")
+st.title("🔬 B-cell and T-cell Epitope Predictor")
+
+# Sidebar navigation
+page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "Epitope Prediction"])
+
 # Load data
 with st.spinner("Loading data..."):
-    df_1, df_2, df_3, df_test, df_train_b, df_train_t = load_data()
+    df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
+# ------------------------------------------
+# PAGE 1: DATA OVERVIEW
+# ------------------------------------------
 if page == "Data Overview":
-    st.header("Data Overview")
-    
-    st.subheader("B-cells Dataset")
-    st.dataframe(df_1.head())
-    
-    st.subheader("T-cells Dataset")
-    st.dataframe(df_2.head())
-    
+    st.header("📊 Data Overview")
+
+    st.subheader("B-cell Dataset")
+    st.dataframe(df_bcell.head())
+
+    st.subheader("T-cell Dataset")
+    st.dataframe(df_tcell.head())
+
     st.subheader("SARS Dataset")
-    st.dataframe(df_3.head())
-    
-    st.subheader("COVID Dataset")
+    st.dataframe(df_sars.head())
+
+    st.subheader("COVID Test Dataset")
     st.dataframe(df_test.head())
-    
-    st.subheader("Training Dataset")
-    st.dataframe(df_train.head())
-    
-    # Data preprocessing
-    if st.checkbox("Show Data Preprocessing"):
-        st.write("Adding feature columns...")
-        df_train_b['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
-        df_train_b['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
-        df_train_b['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
-        df_train_b['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
-        
-        st.dataframe( df_train_b.head())
 
-    if st.checkbox("Show Data Preprocessing"):
-        st.write("Adding feature columns...")
-        df_train_t['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
-        df_train_t['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
-        df_train_t['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
-        df_train_t['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
+    st.subheader("Processed Training Data")
 
-        st.dataframe( df_train_t.head())
-    
-    # Data visualization
-    if st.checkbox("Show Data Visualization"):
-        st.write("Visualizing numerical variables...")
-        num_vars = [x for x in df_train_b.columns if df_train_b[x].dtypes != 'O']
-        num_vars = [x for x in df_train_t.columns if df_train_t[x].dtypes != 'O']
-        for i in num_vars:
-            fig = px.box(df_train_b, df_train_t y=i, color='target')
-            st.plotly_chart(fig)
+    if st.checkbox("Show B-cell Preprocessing"):
+        df_bcell_processed = add_features(df_train_b)
+        st.dataframe(df_bcell_processed.head())
 
+    if st.checkbox("Show T-cell Preprocessing"):
+        df_tcell_processed = add_features(df_train_t)
+        st.dataframe(df_tcell_processed.head())
+
+# ------------------------------------------
+# PAGE 2: MODEL TRAINING
+# ------------------------------------------
 elif page == "Model Training":
-    st.header("Model Training")
-    
-    # Prepare data for training
-        st.write("Adding feature columns...")
-        df_train_b['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
-        df_train_b['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
-        df_train_b['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
-        df_train_b['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
-        st.write("Adding feature columns...")
-        df_train_t['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
-        df_train_t['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
-        df_train_t['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
-        df_train_t['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
-    
-    df_train_b = df_train_b.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
-    df_train_b = df_train_b.dropna(subset=['target'])
-    
-    X = df_train_b.drop("target", axis=1)
-    Y = df_train_b["target"]
+    st.header("🤖 Model Training")
 
-    df_train_t = df_train_t.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
-    df_train_t = df_train_t.dropna(subset=['target'])
-    
-    X = df_train_b.drop("target", axis=1)
-    Y = df_train_b["target"]
-  
+    choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
+    df = df_train_b if choice == "B-cell" else df_train_t
+    df = add_features(df)
 
-    
-    # SMOTE for data upscaling
-    if st.checkbox("Apply SMOTE for data upscaling"):
+    # Drop unused columns
+    df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
+    df = df.dropna(subset=['target'])
+
+    # Split data
+    X = df.drop("target", axis=1)
+    Y = df["target"]
+
+    if st.checkbox("Apply SMOTE for balancing"):
         smote = SMOTE()
         X, Y = smote.fit_resample(X, Y)
-        st.success("SMOTE applied successfully!")
-    
-    # Data normalization
-    if st.checkbox("Apply Data Normalization"):
-        X = MinMaxScaler().fit_transform(X)
-        st.success("Data normalized successfully!")
-    
-    # Train-test split
+        st.success("✅ SMOTE applied")
+
+    if st.checkbox("Normalize features"):
+        scaler = MinMaxScaler()
+        X = scaler.fit_transform(X)
+        st.success("✅ Normalization applied")
+
     test_size = st.slider("Test size", 0.1, 0.5, 0.25)
-    random_state = st.number_input("Random state", 0, 100, 42)
-    
-    if st.button("Split Data"):
-        X_train_b,X_train_t, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
-        st.write(f'Training Features Shape: {X_train_b.shape}')
-        st.write(f'Testing Features Shape: {X_test_b.shape}')
-        st.write(f'Training Labels Shape: {X_test_b.shape}')
-        st.write(f'Testing Labels Shape: {X_test_b.shape}')
-        st.write(f'Training Features Shape: {X_train_t.shape}')
-        st.write(f'Testing Features Shape: {X_train_t.shape}')
-        st.write(f'Training Labels Shape: {X_train_t.shape}')
-        st.write(f'Testing Labels Shape: {X_train_t.shape}')
-    
-    # Train model
-    n_estimators = st.slider("Number of estimators", 100, 2000, 1000)
-    
-    if st.button("Train Model"):
-        with st.spinner("Training model..."):
-            rf = RandomForestClassifier(n_estimators=n_estimators, random_state=random_state)
-            rf.fit(X_train, Y_train)
-            Y_pred_rf = rf.predict(X_test)
-            
-            st.success("Model trained successfully!")
-            st.write("Accuracy:", accuracy_score(Y_test, Y_pred_rf))
+    random_state = st.number_input("Random seed", 0, 100, 42)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
+
+    if st.button("Train Random Forest"):
+        with st.spinner("Training..."):
+            model = RandomForestClassifier(n_estimators=500, random_state=random_state)
+            model.fit(X_train, Y_train)
+            Y_pred = model.predict(X_test)
+
+            st.success("🎉 Model trained successfully!")
+            st.write("Accuracy:", accuracy_score(Y_test, Y_pred))
             st.text("Classification Report:")
-            st.text(classification_report(Y_test, Y_pred_rf))
-            
-            # Confusion Matrix
-            cm = confusion_matrix(Y_test, Y_pred_rf)
+            st.text(classification_report(Y_test, Y_pred))
+
+            cm = confusion_matrix(Y_test, Y_pred)
             fig, ax = plt.subplots()
             sns.heatmap(cm, annot=True, fmt='d', ax=ax)
-            ax.set_xlabel('Predicted')
-            ax.set_ylabel('True')
+            ax.set_xlabel("Predicted")
+            ax.set_ylabel("True")
             st.pyplot(fig)
 
+# ------------------------------------------
+# PAGE 3: EPITOPE PREDICTION
+# ------------------------------------------
 elif page == "Epitope Prediction":
-    st.header("T-cell Epitope Predictor", "B-Cell Epitope Predictor")
-    
-    # Default spike protein sequence
-    default_seq = ("MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFSNVTWFHAIHV"
-                  "SGTNGTKRFDNPVLPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIVNNATNVVIKVCEFQFCNDPFL"
-                  "GVYYHKNNKSWMESEFRVYSSANNCTFEYVSQPFLMDLEGKQGNFKNLREFVFKNIDGYFKIYSKHTPINL"
-                  "VRDLPQGFSALEPLVDLPIGINITRFQTLLALHRSYLTPGDSSSGWTAGAAAYYVGYLQPRTFLLKYNENG"
-                  "TITDAVDCALDPLSETKCTLKSFTVEKGIYQTSNFRVQPTESIVRFPNITNLCPFGEVFNATRFASVYAWN"
-                  "RKRISNCVADYSVLYNSASFSTFKCYGVSPTKLNDLCFTNVYADSFVIRGDEVRQIAPGQTGKIADYNYKL"
-                  "PDDFTGCVIAWNSNNLDSKVGGNYNYLYRLFRKSNLKPFERDISTEIYQAGSTPCNGVEGFNCYFPLQSYG"
-                  "FQPTNGVGYQPYRVVVLSFELLHAPATVCGPKKSTNLVKNKCVNFNFNGLTGTGVLTESNKKFLPFQQFGR"
-                  "DIADTTDAVRDPQTLEILDITPCSFGGVSVITPGTNTSNQVAVLYQDVNCTEVPVAIHADQLTPRWVYSTG"
-                  "SNVFQTRAGCLIGAEHVNNSYECDIPIGAGICASYQTQTNSPRRARSVASQSIIAYTMSLGAENSVAYSNN"
-                  "SIAIPTNFTISVTTEILPVSMTKTSVDCTMYICGDSTECSNLLLQYGSFCTQLNRALTGIAVEQDKNTQEV")
+    st.header("🔎 Epitope Prediction (Simulated)")
 
-# To add a new inout.
-sequence = st.text_area("Paste Protein Sequence", default_seq, height=300)
+    default_seq = (
+        "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFSNVTWFHAIHV"
+        "SGTNGTKRFDNPVLPFNDGVYFASTEKSNIIRGWIFGTTLDSKTQSLLIVNNATNVVIKVCEFQFCNDPFL"
+        "GVYYHKNNKSWMESEFRVYSSANNCTFEYVSQPFLMDLEGKQGNFKNLREFVFKNIDGYFKIYSKHTPINL"
+    )
 
-if st.button("Generate Epitopes"):
-    if sequence:
-        with st.spinner("Generating epitopes..."):
-            df = simulate_peptide_data(sequence)
-            st.success(f"Generated {len(df)} potential epitopes!")
-            st.dataframe(df)
-            
-            csv = df.to_csv(index=False)
-            st.download_button(
-                label="Download CSV",
-                data=csv,
-                file_name="epitopes.csv",
-                mime="text/csv"
-            )
-    else:
-        st.error("Please enter a protein sequence.")
+    sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
+
+    if st.button("Generate Epitopes"):
+        if sequence:
+            with st.spinner("Generating simulated epitopes..."):
+                df = simulate_peptide_data(sequence)
+                st.success(f"Generated {len(df)} peptides!")
+                st.dataframe(df)
+
+                csv = df.to_csv(index=False)
+                st.download_button(
+                    "Download CSV",
+                    data=csv,
+                    file_name="predicted_epitopes.csv",
+                    mime="text/csv"
+                )
+        else:
+            st.error("❗ Please enter a sequence.")
