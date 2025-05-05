@@ -48,7 +48,7 @@ def add_features(df):
 
 def generate_peptides(sequence, min_length=9, max_length=14):
     peptides = []
-    for length in range(min_length = 9, max_length= + 1):
+    for length in range(min_length, max_length + 1):
         for i in range(len(sequence) - length + 1):
             peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
