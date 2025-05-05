@@ -202,7 +202,10 @@ if page == "Epitope Prediction":
                     st.plotly_chart(px.histogram(df_features, x="peptide_length", title="Peptide Length"))
                     st.plotly_chart(px.histogram(df_features, x="hydrophobicity", title="Hydrophobicity"))
                     st.plotly_chart(px.histogram(df_features, x="isoelectric_point", title="Isoelectric Point"))
-
+                    st.plotly_chart(px.histogram(df_features, x="stability", title="stability"))
+                    st.plotly_chart(px.histogram(df_features, x="aromaticity", title="aromaticity"))
+                    st.plotly_chart(px.histogram(df_features, x="emini", title="emini"))
+                    st.plotly_chart(px.histogram(df_features, x="kolaskar_tongaonkar", title="kolaskar_tongaonkar"))
                     csv = df_features.to_csv(index=False)
                     st.download_button("Download CSV", data=csv, file_name="predicted_epitopes.csv")
 
