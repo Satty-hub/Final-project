@@ -185,7 +185,8 @@ elif page == "Epitope Prediction":
                 # Make sure we only use the correct features for prediction
                 X_pred = df_features[feature_cols]
 
-                try:
+
+try:
     model = joblib.load("b-cell-rf_model.pkl")
     scaler = joblib.load("b-cell-scaler.pkl")
     X_scaled = scaler.transform(X_pred)
@@ -205,7 +206,6 @@ elif page == "Epitope Prediction":
 
 except Exception as e:
     st.error(f"❗ Model and Scaler files missing or error: {e}")
-
 
 
 
