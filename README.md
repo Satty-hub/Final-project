@@ -57,27 +57,6 @@ joblib
 requests
 
 
-Create and activate a virtual environment (optional but recommended):
-
-bash
-Copy
-Edit
-python -m venv venv
-source venv/bin/activate  # On Windows, use venv\Scripts\activate
-Install the required dependencies:
-
-bash
-Copy
-Edit
-pip install -r requirements.txt
-Run the Streamlit app:
-
-bash
-Copy
-Edit
-streamlit run UniProt_streamlit_app.py
-This will open the application in your default web browser.
-
 How to Use
 Data Overview:
 
@@ -153,25 +132,3 @@ Histograms and plots for peptide length, hydrophobicity, and other features.
 
 Download a CSV file containing all the peptide data and predictions.
 
-Example
-
-Input Sequence: Paste a protein sequence into the provided text box or enter a UniProt ID to automatically fetch the sequence.
-
-Prediction Result: After predicting, you will see the following:
-
-A table of peptides with their features and prediction results.
-
-Downloadable CSV file containing the data.
-
-Example peptide prediction:
-
-plaintext
-Copy
-Edit
-Peptide: YTFSYGVY
-Hydrophobicity: 0.5
-Stability: 1.3
-Isoelectric Point: 7.0
-Prediction: Epitope
-
- 
