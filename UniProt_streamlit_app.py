@@ -73,39 +73,30 @@ def generate_peptides(sequence, min_length=8, max_length=11):
 
 # Simulation fo the peptide
 
-def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
-    # provide the amino acids list with valid code
-    
-    valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
-    
-    # Filter the sequence to only contain valid amino acids code
-    
-    seq = ''.join([aa for aa in seq if aa in valid_aa])
-
-    if len(seq) == 0:
-        raise ValueError("The sequence contains no valid amino acids.")
-
-    peptides = generate_peptides(seq, min_length=8, max_length=11)  # Peptides between 8 and 11 amino acids
+def simulate_peptide_data(seq, parent_id="Unknown_Protein"):
+    peptides = generate_peptides(seq)
     rows = []
     for start, end, pep in peptides:
         analysis = ProteinAnalysis(pep)
-        row = {
-            "parent_protein_id": parent_id,
-            "protein_seq": seq,
-            "start_position": start,
-            "end_position": end,
-            "peptide_seq": pep,
-            "chou_fasman": round(random.uniform(0.2, 1.0), 3),
-            "emini": round(random.uniform(0.5, 2.5), 3),
-            "kolaskar_tongaonkar": round(random.uniform(0.8, 1.2), 3),
-            "parker": round(random.uniform(0.5, 3.0), 3),
-            "isoelectric_point": round(analysis.isoelectric_point(), 2),
-            "aromaticity": round(analysis.aromaticity(), 3),
-            "hydrophobicity": round(analysis.gravy(), 3),
-            "stability": round(analysis.instability_index(), 2)
-        }
-        rows.append(row)
-    
+        try:
+            row = {
+                "parent_protein_id": parent_id,
+                "protein_seq": seq,
+                "start_position": start,
+                "end_position": end,
+                "peptide_seq": pep,
+                "chou_fasman": round(random.uniform(0.2, 1.0), 3),
+                "emini": round(random.uniform(0.5, 2.5), 3),
+                "kolaskar_tongaonkar": round(random.uniform(0.8, 1.2), 3),
+                "parker": round(random.uniform(0.5, 3.0), 3),
+                "isoelectric_point": round(analysis.isoelectric_point(), 2),
+                "aromaticity": round(analysis.aromaticity(), 3),
+                "hydrophobicity": round(analysis.gravy(), 3),
+                "stability": round(analysis.instability_index(), 2)
+            }
+            rows.append(row)
+        except KeyError:
+            continue  # Skip peptides with unknown amino acids
     return pd.DataFrame(rows)
 
 
