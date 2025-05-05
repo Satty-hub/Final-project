@@ -1,6 +1,5 @@
 # This Python (Pandas) code can be used to predict the Tcell and B cell epitoe using Uni_prot ID or Protein sequence
 # # Import all required libraries
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -13,13 +12,9 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.preprocessing import MinMaxScaler
 from imblearn.over_sampling import SMOTE
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-from Bio import ExPASy, SwissProt
-from Bio import SeqIO
 import requests
 import random
 import joblib
-
-# Uploaded the data. I use sars data to train the model for both b cell and tcells. I got the epitope data from IEDB.
 
 @st.cache_data
 def load_data():
@@ -38,8 +33,6 @@ def load_data():
 
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
-# Adding the feature and modification
-
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -47,9 +40,6 @@ def add_features(df):
     df['parent_protein_id_length'] = df['parent_protein_id'].astype(str).map(len)
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
-
-#   Definethe function for peptide prediction and immnunogenicity
-# 
 
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
@@ -95,15 +85,11 @@ def fetch_sequence_from_uniprot(uniprot_id):
     else:
         return None, None
 
-# Set the Streamlit app configuration
-
 st.set_page_config(layout="wide")
 st.title("🔬 B-cell and T-cell Epitope Predictor")
 
 page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "Epitope Prediction"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
-
-# Data visualization and features
 
 if page == "Data Overview":
     st.header("📊 Data Overview")
@@ -121,8 +107,6 @@ if page == "Data Overview":
     if st.checkbox("Show T-cell Preprocessing"):
         st.dataframe(add_features(df_train_t).head())
 
-# Train the model for prediction
-
 elif page == "Model Training":
     st.header("🤖 Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -134,7 +118,7 @@ elif page == "Model Training":
         'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
         'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
     ]
-    
+
     df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
     df = df.dropna(subset=['target'])
 
@@ -176,12 +160,9 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
-# Define the function for Epitope prediction
-
-
 if page == "Epitope Prediction":
     st.header("🔎 Epitope Prediction with Model")
-    
+
     organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Other"])
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
     default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
@@ -198,7 +179,7 @@ if page == "Epitope Prediction":
     model_type = st.selectbox("Select Model Type", ["B-cell", "T-cell"])
 
     if st.button("Generate Epitopes and Predict"):
-        if sequence.strip() != "":
+        if sequence.strip():
             df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
             df_features = add_features(df)
 
@@ -228,24 +209,18 @@ if page == "Epitope Prediction":
                 csv = df_features.to_csv(index=False)
                 st.download_button("Download CSV", data=csv, file_name="predicted_epitopes.csv")
 
+                positive_preds = df_features[df_features['prediction'] == 1]
+                num_epitopes = len(positive_preds)
+                avg_epitope_size = positive_preds['peptide_length'].mean()
+                total_epitope_size = positive_preds['peptide_length'].sum()
+
+                st.subheader(f"\ud83d\udcca {model_type} Epitope Summary")
+                st.metric("Number of Predicted Epitopes", num_epitopes)
+                st.metric("Average Epitope Length", f"{avg_epitope_size:.2f}")
+                st.metric("Total Epitope Length", f"{total_epitope_size:.2f}")
+
+                st.plotly_chart(px.histogram(positive_preds, x='peptide_length', nbins=10,
+                                             title=f'{model_type} Epitope Length Distribution'))
+
             except Exception as e:
                 st.error(f"Model or scaler error: {e}")
-
-     # Count of predicted positive epitopes (B-cell or T-cell)
-positive_preds = df_features[df_features['prediction'] == 1]
-
-# Number of predicted epitopes
-num_epitopes = len(positive_preds)
-
-# Average and total epitope size
-avg_epitope_size = positive_preds['peptide_length'].mean()
-total_epitope_size = positive_preds['peptide_length'].sum()
-
-st.subheader(f"📊 {model_type} Epitope Summary")
-st.metric("Number of Predicted Epitopes", num_epitopes)
-st.metric("Average Epitope Length", f"{avg_epitope_size:.2f}")
-st.metric("Total Epitope Length", f"{total_epitope_size:.2f}")
-
-# Bar chart of epitope length distribution
-st.plotly_chart(px.histogram(positive_preds, x='peptide_length', nbins=10,
-                             title=f'{model_type} Epitope Length Distribution'))
