@@ -56,14 +56,7 @@ joblib
 
 requests
 
-Setup
-Clone this repository:
 
-bash
-Copy
-Edit
-git clone https://github.com/yourusername/epitope-prediction.git
-cd epitope-prediction
 Create and activate a virtual environment (optional but recommended):
 
 bash
