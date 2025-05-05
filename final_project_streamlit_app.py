@@ -31,9 +31,11 @@ def load_data():
     df_3 = pd.read_csv(sars_url)    # sars csv
     df_test = pd.read_csv(covid_url) # covid csv
     
-    df_train = pd.concat([df_1, df_3])
+    df_train_b = pd.concat([df_1, df_3])
+    df_train_t = pd.concat ([df_2,df_3])
     
-    return df_1, df_2, df_3, df_test, df_train
+    
+    return df_1, df_2, df_3, df_test, df_train_b, df_train_t
 
 # Function to generate peptides
 def generate_peptides(sequence, length=9):
@@ -65,7 +67,7 @@ def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
 
 # Load data
 with st.spinner("Loading data..."):
-    df_1, df_2, df_3, df_test, df_train = load_data()
+    df_1, df_2, df_3, df_test, df_train_b, df_train_t = load_data()
 
 if page == "Data Overview":
     st.header("Data Overview")
@@ -88,37 +90,59 @@ if page == "Data Overview":
     # Data preprocessing
     if st.checkbox("Show Data Preprocessing"):
         st.write("Adding feature columns...")
-        df_train['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
-        df_train['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
-        df_train['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
-        df_train['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
+        df_train_b['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
+        df_train_b['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
+        df_train_b['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
+        df_train_b['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
         
-        st.dataframe(df_train.head())
+        st.dataframe( df_train_b.head())
+
+    if st.checkbox("Show Data Preprocessing"):
+        st.write("Adding feature columns...")
+        df_train_t['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
+        df_train_t['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
+        df_train_t['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
+        df_train_t['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
+
+        st.dataframe( df_train_t.head())
     
     # Data visualization
     if st.checkbox("Show Data Visualization"):
         st.write("Visualizing numerical variables...")
-        num_vars = [x for x in df_train.columns if df_train[x].dtypes != 'O']
-        
+        num_vars = [x for x in df_train_b.columns if df_train_b[x].dtypes != 'O']
+        num_vars = [x for x in df_train_t.columns if df_train_t[x].dtypes != 'O']
         for i in num_vars:
-            fig = px.box(df_train, y=i, color='target')
+            fig = px.box(df_train_b,df_train_t y=i, color='target')
             st.plotly_chart(fig)
 
 elif page == "Model Training":
     st.header("Model Training")
     
     # Prepare data for training
-    st.write("Preparing data for training...")
-    df_train['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
-    df_train['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
-    df_train['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
-    df_train['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
+        st.write("Adding feature columns...")
+        df_train_b['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
+        df_train_b['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
+        df_train_b['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
+        df_train_b['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
+        st.write("Adding feature columns...")
+        df_train_t['protein_seq_length'] = df_train['protein_seq'].astype(str).map(len)
+        df_train_t['peptide_seq_length'] = df_train['peptide_seq'].astype(str).map(len)
+        df_train_t['parent_protein_id_length'] = df_train['parent_protein_id'].astype(str).map(len)
+        df_train_t['peptide_length'] = df_train['end_position'] - df_train['start_position'] + 1
     
-    df_train = df_train.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
-    df_train = df_train.dropna(subset=['target'])
+    df_train_b = df_train_b.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
+    df_train_b = df_train_b.dropna(subset=['target'])
     
-    X = df_train.drop("target", axis=1)
-    Y = df_train["target"]
+    X = df_train_b.drop("target", axis=1)
+    Y = df_train_b["target"]
+
+    df_train_t = df_train_t.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
+    df_train_t = df_train_t.dropna(subset=['target'])
+    
+    X = df_train_b.drop("target", axis=1)
+    Y = df_train_b["target"]
+  
+
     
     # SMOTE for data upscaling
     if st.checkbox("Apply SMOTE for data upscaling"):
@@ -136,11 +160,15 @@ elif page == "Model Training":
     random_state = st.number_input("Random state", 0, 100, 42)
     
     if st.button("Split Data"):
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
-        st.write(f'Training Features Shape: {X_train.shape}')
-        st.write(f'Testing Features Shape: {X_test.shape}')
-        st.write(f'Training Labels Shape: {Y_train.shape}')
-        st.write(f'Testing Labels Shape: {Y_test.shape}')
+        X_train_b,X_train_t, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
+        st.write(f'Training Features Shape: {X_train_b.shape}')
+        st.write(f'Testing Features Shape: {X_test_b.shape}')
+        st.write(f'Training Labels Shape: {X_test_b.shape}')
+        st.write(f'Testing Labels Shape: {X_test_b.shape}')
+        st.write(f'Training Features Shape: {X_train_t.shape}')
+        st.write(f'Testing Features Shape: {X_train_t.shape}')
+        st.write(f'Training Labels Shape: {X_train_t.shape}')
+        st.write(f'Testing Labels Shape: {X_train_t.shape}')
     
     # Train model
     n_estimators = st.slider("Number of estimators", 100, 2000, 1000)
@@ -165,7 +193,7 @@ elif page == "Model Training":
             st.pyplot(fig)
 
 elif page == "Epitope Prediction":
-    st.header("T-cell Epitope Predictor")
+    st.header("T-cell Epitope Predictor", "B-Cell Epitope Predictor")
     
     # Default spike protein sequence
     default_seq = ("MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFSNVTWFHAIHV"
