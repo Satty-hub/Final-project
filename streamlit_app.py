@@ -174,12 +174,14 @@ elif page == "Epitope Prediction":
                 df = simulate_peptide_data(sequence)
                 df_features = add_features(df)
 
-                # Correct feature columns (remove peptide_length)
+                # Include peptide_length in the feature columns
                 feature_cols = [
                     'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
+                    'peptide_length',  
                     'chou_fasman', 'emini', 'kolaskar_tongaonkar',
                     'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
                 ]
+
                 # Make sure we only use the correct features for prediction
                 X_pred = df_features[feature_cols]
 
@@ -204,5 +206,6 @@ elif page == "Epitope Prediction":
                     st.error(f"❗ Model and Scaler files missing or error: {e}")
         else:
             st.error("❗ Please enter a valid sequence.")
+
 
 
