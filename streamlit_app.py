@@ -143,9 +143,9 @@ elif page == "Model Training":
         st.pyplot(fig)
 
         # Save model and scaler
-        joblib.dump(model, f"{choice.lower()}_rf_model.pkl")
-        joblib.dump(scaler, f"{choice.lower()}_scaler.pkl")
-        st.success("✅ Model and Scaler saved")
+        joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
+        joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
+        st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl 'and' {choice.lower()}-scaler.pkl'")
 
 elif page == "Epitope Prediction":
     st.header("🔎 Epitope Prediction with Model")
