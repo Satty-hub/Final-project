@@ -1,5 +1,5 @@
-
-# importing all the required library
+# This Python (Pandas) code can be used to predict the Tcell and B cell epitoe using Uni_prot ID or Protein sequence
+# importing all the required library 
 
 import streamlit as st
 import pandas as pd
@@ -19,6 +19,7 @@ import requests
 
 
 # upload all the data data after cleaning
+# I have used here sars data set for training purposes. I have downloaded the sequence from IEDB for train the model and define all the function.
 
 @st.cache_data
 def load_data():
