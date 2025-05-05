@@ -178,6 +178,24 @@ elif page == "Epitope Prediction":
                   "FQPTNGVGYQPYRVVVLSFELLHAPATVCGPKKSTNLVKNKCVNFNFNGLTGTGVLTESNKKFLPFQQFGR"
                   "DIADTTDAVRDPQTLEILDITPCSFGGVSVITPGTNTSNQVAVLYQDVNCTEVPVAIHADQLTPRWVYSTG"
                   "SNVFQTRAGCLIGAEHVNNSYECDIPIGAGICASYQTQTNSPRRARSVASQSIIAYTMSLGAENSVAYSNN"
-                  "SIAIPTNFTISVTTEILPVSMTKTSVDCTMYICGDSTECSNLLLQYGSFCTQLNRALTGIAVEQDKNTQEV"
-                  "
-                  )
+                  "SIAIPTNFTISVTTEILPVSMTKTSVDCTMYICGDSTECSNLLLQYGSFCTQLNRALTGIAVEQDKNTQEV")
+
+# To add a new inout.
+sequence = st.text_area("Paste Protein Sequence", default_seq, height=300)
+
+if st.button("Generate Epitopes"):
+    if sequence:
+        with st.spinner("Generating epitopes..."):
+            df = simulate_peptide_data(sequence)
+            st.success(f"Generated {len(df)} potential epitopes!")
+            st.dataframe(df)
+            
+            csv = df.to_csv(index=False)
+            st.download_button(
+                label="Download CSV",
+                data=csv,
+                file_name="epitopes.csv",
+                mime="text/csv"
+            )
+    else:
+        st.error("Please enter a protein sequence.")
