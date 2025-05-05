@@ -182,7 +182,6 @@ elif page == "Model Training":
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
 # Epitope prediction model training
-
 elif page == "Epitope Prediction":
     st.header("Epitope Prediction with Model")
     
@@ -198,6 +197,9 @@ elif page == "Epitope Prediction":
     if not sequence:
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
+    
+    # Add a dropdown to select the model type (B-cell or T-cell)
+    model_type = st.selectbox("Select Model Type", ["B-cell", "T-cell"])
 
     if st.button("Generate Epitopes and Predict"):  # Button to trigger the prediction
         if sequence.strip() != "":  # Ensure sequence is not empty
@@ -211,7 +213,7 @@ elif page == "Epitope Prediction":
             ]
 
             try:
-                # Load the pre-trained model and scaler
+                # Load the pre-trained model and scaler based on the selected model type
                 model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
                 scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
 
