@@ -186,26 +186,26 @@ elif page == "Epitope Prediction":
                 X_pred = df_features[feature_cols]
 
                 try:
-                    model = joblib.load("b-cell-rf_model.pkl")
-                    scaler = joblib.load("b-cell-scaler.pkl")
-                    X_scaled = scaler.transform(X_pred)
-                    df['prediction'] = model.predict(X_scaled)
+    model = joblib.load("b-cell-rf_model.pkl")
+    scaler = joblib.load("b-cell-scaler.pkl")
+    X_scaled = scaler.transform(X_pred)
+    predictions = model.predict(X_scaled)
 
-                    st.success(f"Predicted {len(df)} peptides")
-                    st.dataframe(df)
+    df_features['prediction'] = predictions  # attach predictions to df_features
+    st.success(f"Predicted {len(df_features)} peptides")
+    st.dataframe(df_features)
 
-                    st.subheader("📈 Peptide Property Distributions")
-                    st.plotly_chart(px.histogram(df, x="peptide_length", title="Peptide Length"))
-                    st.plotly_chart(px.histogram(df, x="hydrophobicity", title="Hydrophobicity"))
-                    st.plotly_chart(px.histogram(df, x="isoelectric_point", title="Isoelectric Point"))
+    st.subheader("📈 Peptide Property Distributions")
+    st.plotly_chart(px.histogram(df_features, x="peptide_length", title="Peptide Length"))
+    st.plotly_chart(px.histogram(df_features, x="hydrophobicity", title="Hydrophobicity"))
+    st.plotly_chart(px.histogram(df_features, x="isoelectric_point", title="Isoelectric Point"))
 
-                    csv = df.to_csv(index=False)
-                    st.download_button("Download CSV", data=csv, file_name="predicted_epitopes.csv")
+    csv = df_features.to_csv(index=False)
+    st.download_button("Download CSV", data=csv, file_name="predicted_epitopes.csv")
 
-                except Exception as e:
-                    st.error(f"❗ Model and Scaler files missing or error: {e}")
-        else:
-            st.error("❗ Please enter a valid sequence.")
+except Exception as e:
+    st.error(f"❗ Model and Scaler files missing or error: {e}")
+
 
 
 
