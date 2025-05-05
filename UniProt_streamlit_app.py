@@ -63,16 +63,28 @@ def add_features(df):
 
 # Generate the peptide sequence by simulating the data. Define the function.
 
-def generate_peptides(sequence, min_length=9, max_length=14):
+def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
         for i in range(len(sequence) - length + 1):
             peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
 
+# Simulation fo the peptide
 
 def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
-    peptides = generate_peptides(seq)
+    # provide the amino acids list with valid code
+    
+    valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
+    
+    # Filter the sequence to only contain valid amino acids code
+    
+    seq = ''.join([aa for aa in seq if aa in valid_aa])
+
+    if len(seq) == 0:
+        raise ValueError("The sequence contains no valid amino acids.")
+
+    peptides = generate_peptides(seq, min_length=8, max_length=11)  # Peptides between 8 and 11 amino acids
     rows = []
     for start, end, pep in peptides:
         analysis = ProteinAnalysis(pep)
@@ -92,6 +104,7 @@ def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
             "stability": round(analysis.instability_index(), 2)
         }
         rows.append(row)
+    
     return pd.DataFrame(rows)
 
 
@@ -105,6 +118,7 @@ page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "Epito
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
 # Data overview in the Streamlit app.
+
 if page == "Data Overview":
     st.header("📊 Data Overview")
     st.subheader("B-cell Dataset")
@@ -175,11 +189,13 @@ elif page == "Model Training":
         st.pyplot(fig)
 
         # Save model and scaler
+        
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
 # Add all the features and condition for Epitope prediction
+
 if page == "Epitope Prediction":
     st.header("🔎 Epitope Prediction with Model")
 
