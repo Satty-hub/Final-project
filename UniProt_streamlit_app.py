@@ -180,9 +180,10 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
+# Epitope prediction model training 
 
 elif page == "Epitope Prediction":
-    st.header("🔎 Epitope Prediction with Model")
+    st.header("Epitope Prediction with Model")
     
     organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Other"])
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
@@ -244,4 +245,25 @@ elif page == "Epitope Prediction":
 
         st.plotly_chart(px.bar(comp_df, x="Model", y=["Number of Epitopes", "Avg Epitope Length", "Avg Immunogenicity"],
                                barmode='group', title="B-cell vs T-cell Comparison"))
+    st.subheader("Peptide Feature Distributions")
+
+feature_cols_to_plot = [
+    'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
+    'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
+    'parker', 'immunogenicity_score'
+]
+
+for col in feature_cols_to_plot:
+    if col in df_features.columns:
+        fig = px.histogram(df_features, x=col, nbins=20, title=f'Distribution of {col}')
+        st.plotly_chart(fig, use_container_width=True)
+
+st.subheader("Comparison of Positive vs. Negative Predictions")
+
+for col in feature_cols_to_plot:
+    if col in df_features.columns:
+        fig = px.histogram(df_features, x=col, color='prediction',
+                           barmode='overlay', nbins=20,
+                           title=f'{col} Distribution by Prediction')
+        st.plotly_chart(fig, use_container_width=True)
 
