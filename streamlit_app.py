@@ -163,7 +163,7 @@ elif page == "Model Training":
 
  # Add all the features and condition for Epitope prediction
 
-elif page == "Epitope Prediction":
+if page == "Epitope Prediction":
     st.header("🔎 Epitope Prediction with Model")
     default_seq = (
         "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVLHSTQDLFLPFFSNVTWFHAIHV"
@@ -174,42 +174,40 @@ elif page == "Epitope Prediction":
 
     if st.button("Generate Epitopes and Predict"):
         if sequence:
-            with st.spinner("Generating peptides and loading model..."):
+            with st.spinner("Generating peptides and predicting..."):
                 df = simulate_peptide_data(sequence)
                 df_features = add_features(df)
 
-                # Include peptide_length in the feature columns
                 feature_cols = [
                     'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
-                    'peptide_length',  
+                    'peptide_length',
                     'chou_fasman', 'emini', 'kolaskar_tongaonkar',
                     'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
                 ]
 
-                # Make sure we only use the correct features for prediction
-                X_pred = df_features[feature_cols]
+                try:
+                    model = joblib.load("b-cell-rf_model.pkl")
+                    scaler = joblib.load("b-cell-scaler.pkl")
+                    
+                    X_pred = df_features[feature_cols]
+                    X_scaled = scaler.transform(X_pred)
+                    predictions = model.predict(X_scaled)
 
+                    df_features['prediction'] = predictions
 
-try:
-    model = joblib.load("b-cell-rf_model.pkl")
-    scaler = joblib.load("b-cell-scaler.pkl")
-    X_scaled = scaler.transform(X_pred)
-    predictions = model.predict(X_scaled)
+                    st.success(f"✅ Predicted {len(df_features)} peptides.")
+                    st.dataframe(df_features)
 
-    df_features['prediction'] = predictions  # attach predictions to df_features
-    st.success(f"Predicted {len(df_features)} peptides")
-    st.dataframe(df_features)
+                    st.subheader("📈 Peptide Property Distributions")
+                    st.plotly_chart(px.histogram(df_features, x="peptide_length", title="Peptide Length"))
+                    st.plotly_chart(px.histogram(df_features, x="hydrophobicity", title="Hydrophobicity"))
+                    st.plotly_chart(px.histogram(df_features, x="isoelectric_point", title="Isoelectric Point"))
 
-    st.subheader("📈 Peptide Property Distributions")
-    st.plotly_chart(px.histogram(df_features, x="peptide_length", title="Peptide Length"))
-    st.plotly_chart(px.histogram(df_features, x="hydrophobicity", title="Hydrophobicity"))
-    st.plotly_chart(px.histogram(df_features, x="isoelectric_point", title="Isoelectric Point"))
+                    csv = df_features.to_csv(index=False)
+                    st.download_button("Download CSV", data=csv, file_name="predicted_epitopes.csv")
 
-    csv = df_features.to_csv(index=False)
-    st.download_button("Download CSV", data=csv, file_name="predicted_epitopes.csv")
-
-except Exception as e:
-    st.error(f"❗ Model and Scaler files missing or error: {e}")
+                except Exception as e:
+                    st.error(f"❗ Model and Scaler files missing or error: {e}")
 
 
 
