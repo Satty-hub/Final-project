@@ -16,6 +16,7 @@ import requests
 import random
 import joblib
 
+# Step 1: Upload the data
 @st.cache_data
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
@@ -33,6 +34,8 @@ def load_data():
 
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
+# Step 2: Feature Engineering
+
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -41,12 +44,16 @@ def add_features(df):
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
 
+# Step 3: Generate peptides
+
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
         for i in range(len(sequence) - length + 1):
             peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
+
+# Step 4: Simulate data with features
 
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     peptides = generate_peptides(seq)
@@ -73,6 +80,8 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
         rows.append(row)
     return pd.DataFrame(rows)
 
+# Step 5: Fetch sequence from UniProt
+
 def fetch_sequence_from_uniprot(uniprot_id):
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
@@ -82,8 +91,9 @@ def fetch_sequence_from_uniprot(uniprot_id):
         seq = "".join(lines[1:])
         name = lines[0].split("|")[-1].strip()
         return seq, name
-    else:
-        return None, None
+    return None, None
+
+# Step 6: Streamlit UI
 
 st.set_page_config(layout="wide")
 st.title("🔬 B-cell and T-cell Epitope Predictor")
@@ -93,134 +103,90 @@ df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
 if page == "Data Overview":
     st.header("📊 Data Overview")
-    st.subheader("B-cell Dataset")
     st.dataframe(df_bcell.head())
-    st.subheader("T-cell Dataset")
     st.dataframe(df_tcell.head())
-    st.subheader("SARS Dataset")
     st.dataframe(df_sars.head())
-    st.subheader("COVID Test Dataset")
-    st.dataframe(df_test.head())
-    st.subheader("Processed Training Data")
-    if st.checkbox("Show B-cell Preprocessing"):
-        st.dataframe(add_features(df_train_b).head())
-    if st.checkbox("Show T-cell Preprocessing"):
-        st.dataframe(add_features(df_train_t).head())
 
-elif page == "Model Training":
+if page == "Model Training":
     st.header("🤖 Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
     df = df_train_b if choice == "B-cell" else df_train_t
     df = add_features(df)
-
     FEATURE_COLUMNS = [
         'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
         'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
         'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
     ]
-
-    df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
     df = df.dropna(subset=['target'])
-
     X = df[FEATURE_COLUMNS]
     Y = df["target"]
-
-    if st.checkbox("Apply SMOTE for balancing"):
+    if st.checkbox("Apply SMOTE"):
         smote = SMOTE()
         X, Y = smote.fit_resample(X, Y)
-        st.success(" SMOTE applied")
-
     scaler = MinMaxScaler()
     X = scaler.fit_transform(X)
-    st.success(" Features normalized")
-
-    test_size = st.slider("Test size", 0.1, 0.5, 0.25)
-    random_state = st.number_input("Random seed", 0, 100, 42)
-
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
-
-    if st.button("Train Random Forest"):
-        model = RandomForestClassifier(n_estimators=500, random_state=random_state)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, random_state=42)
+    if st.button("Train Model"):
+        model = RandomForestClassifier(n_estimators=500)
         model.fit(X_train, Y_train)
         Y_pred = model.predict(X_test)
-
-        st.success(" Model trained successfully!")
         st.write("Accuracy:", accuracy_score(Y_test, Y_pred))
-        st.text("Classification Report:")
         st.text(classification_report(Y_test, Y_pred))
-
-        cm = confusion_matrix(Y_test, Y_pred)
-        fig, ax = plt.subplots()
-        sns.heatmap(cm, annot=True, fmt='d', ax=ax)
-        ax.set_xlabel("Predicted")
-        ax.set_ylabel("True")
-        st.pyplot(fig)
-
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
-        st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
 if page == "Epitope Prediction":
-    st.header("🔎 Epitope Prediction with Model")
-
-    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Other"])
-    uniprot_id = st.text_input("Enter UniProt ID (Optional)")
-    default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
+    st.header("🔎 Epitope Prediction")
+    organism = st.selectbox("Organism", ["Human", "Virus", "Bacteria"])
+    uniprot_id = st.text_input("UniProt ID")
+    default_seq = "MFVFLVLLPLVSSQCVNL..."
     sequence = None
     protein_name = "Unknown"
-
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
-
     if not sequence:
-        sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
+        sequence = st.text_area("Paste Protein Sequence", default_seq)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
 
-    model_type = st.selectbox("Select Model Type", ["B-cell", "T-cell"])
-
-    if st.button("Generate Epitopes and Predict"):
-        if sequence.strip():
+    if st.button("Compare B-cell and T-cell Predictions"):
+        full_results = {}
+        for model_type in ["B-cell", "T-cell"]:
             df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
             df_features = add_features(df)
-
             feature_cols = [
                 'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
                 'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
                 'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
             ]
+            model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
+            scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
+            X_pred = scaler.transform(df_features[feature_cols])
+            preds = model.predict(X_pred)
+            df_features['prediction'] = preds
+            df_features['model_type'] = model_type
+            full_results[model_type] = df_features
 
-            try:
-                model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
-                scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
+        b_df = full_results["B-cell"]
+        t_df = full_results["T-cell"]
 
-                X_pred = df_features[feature_cols]
-                X_scaled = scaler.transform(X_pred)
-                predictions = model.predict(X_scaled)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("B-cell Prediction Summary")
+            b_pos = b_df[b_df['prediction'] == 1]
+            st.metric("Positive Epitopes", len(b_pos))
+            st.metric("Avg Length", round(b_pos['peptide_length'].mean(), 2))
+            st.metric("Total Length", round(b_pos['peptide_length'].sum(), 2))
+            st.plotly_chart(px.histogram(b_pos, x='peptide_length', title='B-cell Length'))
+        with col2:
+            st.subheader("T-cell Prediction Summary")
+            t_pos = t_df[t_df['prediction'] == 1]
+            st.metric("Positive Epitopes", len(t_pos))
+            st.metric("Avg Length", round(t_pos['peptide_length'].mean(), 2))
+            st.metric("Total Length", round(t_pos['peptide_length'].sum(), 2))
+            st.plotly_chart(px.histogram(t_pos, x='peptide_length', title='T-cell Length'))
 
-                df_features['prediction'] = predictions
+        st.subheader("📥 Download Combined Prediction CSV")
+        combined = pd.concat([b_df, t_df])
+        csv = combined.to_csv(index=False, encoding='utf-8-sig')
+        st.download_button("Download CSV", data=csv.encode('utf-8-sig'), file_name="combined_predictions.csv")
 
-                st.success(f"Predicted {len(df_features)} peptides.")
-                st.dataframe(df_features)
-
-                st.subheader("Peptide Feature Distributions")
-                for col in ['peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability', 'aromaticity', 'emini', 'kolaskar_tongaonkar', 'immunogenicity_score']:
-                    st.plotly_chart(px.histogram(df_features, x=col, title=col))
-
-                csv = df_features.to_csv(index=False)
-                st.download_button("Download CSV", data=csv, file_name="predicted_epitopes.csv")
-
-                positive_preds = df_features[df_features['prediction'] == 1]
-                num_epitopes = len(positive_preds)
-                avg_epitope_size = positive_preds['peptide_length'].mean()
-                total_epitope_size = positive_preds['peptide_length'].sum()
-
-                st.subheader(f"\ud83d\udcca {model_type} Epitope Summary")
-                st.metric("Number of Predicted Epitopes", num_epitopes)
-                st.metric("Average Epitope Length", f"{avg_epitope_size:.2f}")
-                st.metric("Total Epitope Length", f"{total_epitope_size:.2f}")
-
-                st.plotly_chart(px.histogram(positive_preds, x='peptide_length', nbins=10,
-                                             title=f'{model_type} Epitope Length Distribution'))
-
-            except Exception as e:
-                st.error(f"Model or scaler error: {e}")
