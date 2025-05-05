@@ -1,6 +1,6 @@
  pandas-profiling[notebook,html]
-!pip install pycaret
-!pip install sklearn
+ pip install pycaret
+ pip install sklearn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
