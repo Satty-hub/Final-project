@@ -17,6 +17,7 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from Bio import SeqIO
 import joblib
 import random
+from Bio.SeqUtils import seq1
 
 # 2. upload the data for  training. I have used SARS_CoV-2 data for training.
 @st.cache_data
@@ -57,17 +58,20 @@ def generate_peptides(sequence, min_length=9, max_length=14):
 
 # 5. Testing the Simulate peptide dataset
 
-def simulate_peptide_data(seq, parent_id="Protein"):
+def simulate_peptide_data(seq, parent_id="Spike_SARS_CoV_2"):
     peptides = generate_peptides(seq)
     rows = []
     for start, end, pep in peptides:
-        analysis = ProteinAnalysis(pep)
+        # Clean the peptide sequence using seq1 (ensures it only contains valid amino acids)
+        cleaned_pep = seq1(pep)  # Converts the sequence to single-letter codes and removes invalid characters
+        
+        analysis = ProteinAnalysis(cleaned_pep)
         row = {
             "parent_protein_id": parent_id,
             "protein_seq": seq,
             "start_position": start,
             "end_position": end,
-            "peptide_seq": pep,
+            "peptide_seq": cleaned_pep,
             "chou_fasman": round(random.uniform(0.2, 1.0), 3),
             "emini": round(random.uniform(0.5, 2.5), 3),
             "kolaskar_tongaonkar": round(random.uniform(0.8, 1.2), 3),
