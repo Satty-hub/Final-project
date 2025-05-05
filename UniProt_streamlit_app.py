@@ -96,97 +96,142 @@ def fetch_sequence_from_uniprot(uniprot_id):
 # Step 6: Streamlit UI
 
 st.set_page_config(layout="wide")
-st.title("🔬 B-cell and T-cell Epitope Predictor")
+st.title("B-cell and T-cell Epitope Predictor")
 
 page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "Epitope Prediction"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
 if page == "Data Overview":
-    st.header("📊 Data Overview")
+    st.header("Data Overview")
+    st.subheader("B-cell Dataset")
     st.dataframe(df_bcell.head())
+    st.subheader("T-cell Dataset")
     st.dataframe(df_tcell.head())
+    st.subheader("SARS Dataset")
     st.dataframe(df_sars.head())
+    st.subheader("COVID Test Dataset")
+    st.dataframe(df_test.head())
+    st.subheader("Processed Training Data")
+    if st.checkbox("Show B-cell Preprocessing"):
+        st.dataframe(add_features(df_train_b).head())
+    if st.checkbox("Show T-cell Preprocessing"):
+        st.dataframe(add_features(df_train_t).head())
 
-if page == "Model Training":
-    st.header("🤖 Model Training")
+#  Train the model for prediction
+elif page == "Model Training":
+    st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
     df = df_train_b if choice == "B-cell" else df_train_t
     df = add_features(df)
+
     FEATURE_COLUMNS = [
         'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
         'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
         'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
     ]
+    
+    df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
     df = df.dropna(subset=['target'])
+
     X = df[FEATURE_COLUMNS]
     Y = df["target"]
-    if st.checkbox("Apply SMOTE"):
+
+    if st.checkbox("Apply SMOTE for balancing"):
         smote = SMOTE()
         X, Y = smote.fit_resample(X, Y)
+        st.success(" SMOTE applied")
+
     scaler = MinMaxScaler()
     X = scaler.fit_transform(X)
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, random_state=42)
-    if st.button("Train Model"):
-        model = RandomForestClassifier(n_estimators=500)
+
+    test_size = st.slider("Test size", 0.1, 0.5, 0.25)
+    random_state = st.number_input("Random seed", 0, 100, 42)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
+
+    if st.button("Train Random Forest"):
+        model = RandomForestClassifier(n_estimators=500, random_state=random_state)
         model.fit(X_train, Y_train)
         Y_pred = model.predict(X_test)
+
+        st.success(" Model trained successfully!")
         st.write("Accuracy:", accuracy_score(Y_test, Y_pred))
+        st.text("Classification Report:")
         st.text(classification_report(Y_test, Y_pred))
+
+        cm = confusion_matrix(Y_test, Y_pred)
+        fig, ax = plt.subplots()
+        sns.heatmap(cm, annot=True, fmt='d', ax=ax)
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("True")
+        st.pyplot(fig)
+
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
+        st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
-if page == "Epitope Prediction":
-    st.header("🔎 Epitope Prediction")
-    organism = st.selectbox("Organism", ["Human", "Virus", "Bacteria"])
-    uniprot_id = st.text_input("UniProt ID")
-    default_seq = "MFVFLVLLPLVSSQCVNL..."
+
+elif page == "Epitope Prediction":
+    st.header("🔎 Epitope Prediction with Model")
+    
+    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Other"])
+    uniprot_id = st.text_input("Enter UniProt ID (Optional)")
+    default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
     sequence = None
     protein_name = "Unknown"
+
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
+
     if not sequence:
-        sequence = st.text_area("Paste Protein Sequence", default_seq)
+        sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
 
-    if st.button("Compare B-cell and T-cell Predictions"):
-        full_results = {}
-        for model_type in ["B-cell", "T-cell"]:
+    df_all = {}
+    for model_type in ["B-cell", "T-cell"]:
+        if sequence.strip() != "":
             df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
             df_features = add_features(df)
+
             feature_cols = [
                 'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
                 'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
                 'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
             ]
-            model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
-            scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
-            X_pred = scaler.transform(df_features[feature_cols])
-            preds = model.predict(X_pred)
-            df_features['prediction'] = preds
-            df_features['model_type'] = model_type
-            full_results[model_type] = df_features
 
-        b_df = full_results["B-cell"]
-        t_df = full_results["T-cell"]
+            try:
+                model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
+                scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("B-cell Prediction Summary")
-            b_pos = b_df[b_df['prediction'] == 1]
-            st.metric("Positive Epitopes", len(b_pos))
-            st.metric("Avg Length", round(b_pos['peptide_length'].mean(), 2))
-            st.metric("Total Length", round(b_pos['peptide_length'].sum(), 2))
-            st.plotly_chart(px.histogram(b_pos, x='peptide_length', title='B-cell Length'))
-        with col2:
-            st.subheader("T-cell Prediction Summary")
-            t_pos = t_df[t_df['prediction'] == 1]
-            st.metric("Positive Epitopes", len(t_pos))
-            st.metric("Avg Length", round(t_pos['peptide_length'].mean(), 2))
-            st.metric("Total Length", round(t_pos['peptide_length'].sum(), 2))
-            st.plotly_chart(px.histogram(t_pos, x='peptide_length', title='T-cell Length'))
+                X_pred = df_features[feature_cols]
+                X_scaled = scaler.transform(X_pred)
+                predictions = model.predict(X_scaled)
 
-        st.subheader("📥 Download Combined Prediction CSV")
-        combined = pd.concat([b_df, t_df])
-        csv = combined.to_csv(index=False, encoding='utf-8-sig')
-        st.download_button("Download CSV", data=csv.encode('utf-8-sig'), file_name="combined_predictions.csv")
+                df_features['prediction'] = predictions
+                df_all[model_type] = df_features
+
+                st.subheader(f"{model_type} Epitope Predictions")
+                st.dataframe(df_features)
+                st.plotly_chart(px.histogram(df_features, x="immunogenicity_score", title="Immunogenicity Score"))
+                st.download_button(f"Download {model_type} Predictions", df_features.to_csv(index=False, encoding='utf-8-sig'), f"{model_type}_predicted.csv")
+
+            except Exception as e:
+                st.error(f"{model_type} Model error: {e}")
+
+    if "B-cell" in df_all and "T-cell" in df_all:
+        b_pos = df_all["B-cell"][df_all["B-cell"]['prediction'] == 1]
+        t_pos = df_all["T-cell"][df_all["T-cell"]['prediction'] == 1]
+
+        comp_df = pd.DataFrame({
+            "Model": ["B-cell", "T-cell"],
+            "Number of Epitopes": [len(b_pos), len(t_pos)],
+            "Avg Epitope Length": [b_pos['peptide_length'].mean(), t_pos['peptide_length'].mean()],
+            "Avg Immunogenicity": [b_pos['immunogenicity_score'].mean(), t_pos['immunogenicity_score'].mean()]
+        })
+
+        st.subheader("Combined Comparison of B-cell and T-cell Predictions")
+        st.dataframe(comp_df)
+
+        st.plotly_chart(px.bar(comp_df, x="Model", y=["Number of Epitopes", "Avg Epitope Length", "Avg Immunogenicity"],
+                               barmode='group', title="B-cell vs T-cell Comparison"))
 
