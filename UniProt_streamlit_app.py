@@ -229,22 +229,21 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-     # Feature distributions visualization
 
     # Feature distributions visualization
 
-st.subheader("Enhanced Peptide Feature Distributions")
+            st.subheader("Enhanced Peptide Feature Distributions")
 
-try:
-    feature_cols_to_plot = [
-        'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
-        'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
-        'parker', 'immunogenicity_score'
-    ]
+        try:
+         feature_cols_to_plot = [
+         'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
+         'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
+         'parker', 'immunogenicity_score'
+        ]
 
-    for col in feature_cols_to_plot:
-        if col in df_features.columns:
-            fig = px.histogram(
+      for col in feature_cols_to_plot:
+          if col in df_features.columns:
+             fig = px.histogram(
                 df_features,
                 x=col,
                 nbins=20,
