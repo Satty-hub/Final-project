@@ -180,12 +180,13 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
+
 # Input for the Prediction model
 
-elif page == "Epitope Prediction":
+elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     st.header("Epitope Prediction with Model")
     
-    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi","Mice" "Other"]) # Input you want to choose from
+    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"]) # Input you want to choose from
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
     default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
     sequence = None
@@ -198,9 +199,8 @@ elif page == "Epitope Prediction":
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
     
-    # Add a dropdown menu to select the model type (B-cell or T-cell)
-    
-    model_type = st.selectbox("Select Model Type", ["B-cell", "T-cell"])
+    # Set model type based on navigation choice
+    model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
     if st.button("Generate Epitopes and Predict"):  # Button to trigger the prediction
         if sequence.strip() != "":  # Ensure sequence is not empty
@@ -225,10 +225,12 @@ elif page == "Epitope Prediction":
                 df_features['prediction'] = predictions
 
                 # Display success message and the predictions table
+                
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
                 # Feature distributions visualization
+                
                 st.subheader("Peptide Feature Distributions")
                 feature_cols_to_plot = [
                     'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
