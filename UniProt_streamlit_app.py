@@ -1,4 +1,5 @@
 # This Python (Pandas) code can be used to predict the Tcell and B cell epitope using UniProt ID or Protein sequence
+
 # Import all required libraries
 import streamlit as st
 import pandas as pd
@@ -117,7 +118,6 @@ if page == "Data Overview":
     if st.checkbox("Show T-cell Preprocessing"):
         st.dataframe(add_features(df_train_t).head())
 
-#  Train the model for prediction. I have used sars data for training
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -130,13 +130,13 @@ elif page == "Model Training":
         'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
     ]
     
-    df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1) # If there is any duplicate seq
+    df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
     df = df.dropna(subset=['target'])
 
     X = df[FEATURE_COLUMNS]
     Y = df["target"]
 
-    if st.checkbox("Apply SMOTE for balancing"): # To avoid the incorrect value to make it more balanced and also to avoid more outliers
+    if st.checkbox("Apply SMOTE for balancing"):
         smote = SMOTE()
         X, Y = smote.fit_resample(X, Y)
         st.success(" SMOTE applied")
@@ -147,7 +147,7 @@ elif page == "Model Training":
     test_size = st.slider("Test size", 0.1, 0.5, 0.25)
     random_state = st.number_input("Random seed", 0, 100, 42)
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state) #  Train the model before so we can get better prediction based on the input 
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
 
     if st.button("Train Random Forest"):
         model = RandomForestClassifier(n_estimators=500, random_state=random_state) 
@@ -155,11 +155,11 @@ elif page == "Model Training":
         Y_pred = model.predict(X_test)
 
         st.success(" Model trained successfully!")
-        st.write("Accuracy:", accuracy_score(Y_test, Y_pred)) # Provide the training report
+        st.write("Accuracy:", accuracy_score(Y_test, Y_pred))
         st.text("Classification Report:")
         st.text(classification_report(Y_test, Y_pred))
 
-        cm = confusion_matrix(Y_test, Y_pred)    # Provide the training report heatmap
+        cm = confusion_matrix(Y_test, Y_pred)
         fig, ax = plt.subplots()
         sns.heatmap(cm, annot=True, fmt='d', ax=ax)
         ax.set_xlabel("Predicted")
@@ -170,8 +170,6 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
-
-# Input for the Prediction model
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
     
@@ -191,7 +189,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
     if st.button("Generate Epitopes and Predict"):
-        if sequence.strip() != "":  # Ensure sequence is not empty
+        if sequence.strip() != "":
             df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
             df_features = add_features(df)
 
@@ -202,7 +200,6 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
             ]
 
             try:
-                # Load the pre-trained model and scaler based on the selected model type
                 model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
                 scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
 
@@ -210,40 +207,55 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 X_scaled = scaler.transform(X_pred)
                 predictions = model.predict(X_scaled)
 
-                # Add prediction column to dataframe
                 df_features['prediction'] = predictions
 
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # Visualizations for feature analysis
-
-                # 1. Feature Distribution
-                st.subheader("Feature Distribution")
+                # Feature Visualization
+                st.subheader("Select Plot Type for Feature Visualization")
                 selected_feature = st.selectbox("Select feature to plot", feature_cols)
+                plot_type = st.selectbox("Select plot type", ["Histogram", "Boxplot", "Bar Chart", "Scatterplot"])
+
                 fig, ax = plt.subplots()
-                sns.histplot(df_features[selected_feature], kde=True, ax=ax)
+
+                # Create plot based on selected type
+                if plot_type == "Histogram":
+                    sns.histplot(df_features[selected_feature], kde=True, ax=ax)
+                    ax.set_title(f"{selected_feature} Distribution (Histogram)")
+                elif plot_type == "Boxplot":
+                    sns.boxplot(x=df_features[selected_feature], ax=ax)
+                    ax.set_title(f"{selected_feature} Distribution (Boxplot)")
+                elif plot_type == "Bar Chart":
+                    count_data = df_features[selected_feature].value_counts()
+                    count_data.plot(kind='bar', ax=ax)
+                    ax.set_title(f"{selected_feature} Distribution (Bar Chart)")
+                elif plot_type == "Scatterplot":
+                    if "peptide_length" in df_features.columns:
+                        sns.scatterplot(x="peptide_length", y=selected_feature, data=df_features, ax=ax)
+                        ax.set_title(f"Peptide Length vs {selected_feature} (Scatterplot)")
+                    else:
+                        st.warning("Scatter plot requires peptide_length feature!")
+
                 st.pyplot(fig)
 
-                # 2. Prediction Counts
+                # Visualizations for other feature analysis
                 st.subheader("Prediction Counts")
                 fig2 = px.histogram(df_features, x="prediction", title="Epitope Prediction Distribution")
                 st.plotly_chart(fig2)
 
-                # 3. Peptide Length vs Immunogenicity Scatter
                 st.subheader("Peptide Length vs Immunogenicity Score")
                 fig3 = px.scatter(df_features, x="peptide_length", y="immunogenicity_score", color="prediction",
                                   title="Length vs Immunogenicity Score")
                 st.plotly_chart(fig3)
 
-                # 4. Feature Correlation Heatmap
                 st.subheader("Feature Correlation Heatmap")
                 corr = df_features[feature_cols].corr()
                 fig4, ax4 = plt.subplots(figsize=(10, 6))
                 sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax4)
                 st.pyplot(fig4)
 
-                # 5. Epitope Length Histogram
+                # Epitope Length Histogram
                 st.subheader(f"{model_type} Epitope Length Distribution")
                 positive_preds = df_features[df_features['prediction'] == 1]
                 fig5 = px.histogram(positive_preds, x='peptide_length', nbins=20,
