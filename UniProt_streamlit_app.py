@@ -211,7 +211,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 model_file = f"{model_type.lower()}-rf_model.pkl"
                 if not os.path.exists(model_file):
                     st.error(f"Model file '{model_file}' not found. Please train the model first.")
-                    return  # Removed 'return' statement
+                    
                 
                 model = joblib.load(model_file)
                 scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
