@@ -96,7 +96,6 @@ def fetch_sequence_from_uniprot(uniprot_id):
     return None, None
 
 # Load the datasets in the Streamlit
-
 st.set_page_config(layout="wide")
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "T cell epitope predictor", "B cell epitope predictor"])
@@ -119,7 +118,6 @@ if page == "Data Overview":
         st.dataframe(add_features(df_train_t).head())
 
 #  Train the model for prediction. I have used sars data for training
-
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -138,7 +136,7 @@ elif page == "Model Training":
     X = df[FEATURE_COLUMNS]
     Y = df["target"]
 
-    if st.checkbox("Apply SMOTE for balancing"): # To avaoid the incorrect value to ake it more balancing and also to avoid more outlier
+    if st.checkbox("Apply SMOTE for balancing"): # To avoid the incorrect value to make it more balanced and also to avoid more outliers
         smote = SMOTE()
         X, Y = smote.fit_resample(X, Y)
         st.success(" SMOTE applied")
@@ -174,7 +172,6 @@ elif page == "Model Training":
 
 
 # Input for the Prediction model
-
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
     
@@ -219,91 +216,46 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # **Visualizations for feature analysis**
+                # Visualizations for feature analysis
 
-                # 1. **Violin Plot** for the **Immunogenicity Score** (to see distribution)
-                if 'immunogenicity_score' in df_features.columns:
-                    fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all",
-                                   title="Immunogenicity Score Distribution", 
-                                   color_discrete_sequence=["#FF6F61"])
-                    fig.update_layout(
-                        yaxis_title="Immunogenicity Score",
-                        xaxis_title="Distribution",
-                        font=dict(size=12)
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
+                # 1. Feature Distribution
+                st.subheader("Feature Distribution")
+                selected_feature = st.selectbox("Select feature to plot", feature_cols)
+                fig, ax = plt.subplots()
+                sns.histplot(df_features[selected_feature], kde=True, ax=ax)
+                st.pyplot(fig)
 
-                # 2. **Box Plot** for the **Hydrophobicity** feature
-                fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
-                             color_discrete_sequence=["#66C2A5"])
-                fig.update_layout(
-                    yaxis_title="Hydrophobicity",
-                    font=dict(size=12)
-                )
-                st.plotly_chart(fig, use_container_width=True)
+                # 2. Prediction Counts
+                st.subheader("Prediction Counts")
+                fig2 = px.histogram(df_features, x="prediction", title="Epitope Prediction Distribution")
+                st.plotly_chart(fig2)
 
-                # 3. **Correlation Heatmap** for feature correlations
-                correlation_matrix = df_features[feature_cols].corr()
-                plt.figure(figsize=(10, 8))
-                sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt='.2f', linewidths=0.5)
-                st.pyplot(plt, use_container_width=True)
+                # 3. Peptide Length vs Immunogenicity Scatter
+                st.subheader("Peptide Length vs Immunogenicity Score")
+                fig3 = px.scatter(df_features, x="peptide_length", y="immunogenicity_score", color="prediction",
+                                  title="Length vs Immunogenicity Score")
+                st.plotly_chart(fig3)
 
-                # 4. **Pairplot (Scatter Plot Matrix)** for selected features
-                selected_features = ['peptide_length', 'hydrophobicity', 'stability', 'aromaticity', 'emini']
-                sns.pairplot(df_features[selected_features], hue="prediction", palette="Set1")
-                st.pyplot(plt, use_container_width=True)
+                # 4. Feature Correlation Heatmap
+                st.subheader("Feature Correlation Heatmap")
+                corr = df_features[feature_cols].corr()
+                fig4, ax4 = plt.subplots(figsize=(10, 6))
+                sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax4)
+                st.pyplot(fig4)
 
-                # 5. **Radar Plot** for peptide features like **hydrophobicity, stability, etc.**
-                if len(df_features) > 1:
-                    peptide_example = df_features.iloc[0]  # Take one example peptide
-                    features = ['hydrophobicity', 'stability', 'aromaticity', 'peptide_length', 'isoelectric_point']
-                    values = peptide_example[features].values.flatten().tolist()
-                    categories = features
-
-                    fig = plt.figure(figsize=(6, 6))
-                    ax = fig.add_subplot(111, polar=True)
-                    angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
-                    values += values[:1]  # Complete the loop
-                    angles += angles[:1]
-                    ax.fill(angles, values, color='teal', alpha=0.25)
-                    ax.plot(angles, values, color='teal', linewidth=2)
-                    ax.set_yticklabels([])
-                    ax.set_xticks(angles[:-1])
-                    ax.set_xticklabels(categories)
-                    ax.set_title('Radar Plot for Peptide Features', size=14)
-                    st.pyplot(fig, use_container_width=True)
-
-                # 6. **Feature Importance Plot** using the trained RandomForest model
-                feature_importances = model.feature_importances_
-                importance_df = pd.DataFrame({
-                    'Feature': feature_cols,
-                    'Importance': feature_importances
-                }).sort_values(by='Importance', ascending=False)
-
-                fig = px.bar(importance_df, x='Feature', y='Importance', title="Feature Importance",
-                             color='Importance', color_continuous_scale='Viridis')
-                fig.update_layout(xaxis_title="Feature", yaxis_title="Importance", font=dict(size=12))
-                st.plotly_chart(fig, use_container_width=True)
-
-                # Positive predictions stats
-                positive_preds = df_features[df_features['prediction'] == 1]
-                st.subheader(f"{model_type} Epitope Summary")
-                st.metric("Number of Predicted Epitopes", len(positive_preds))
-                st.metric("Average Epitope Length", f"{positive_preds['peptide_length'].mean():.2f}")
-                st.metric("Total Epitope Length", f"{positive_preds['peptide_length'].sum():.2f}")
-
-                # Epitope length histogram with customized Plotly figure
+                # 5. Epitope Length Histogram
                 st.subheader(f"{model_type} Epitope Length Distribution")
-                fig = px.histogram(positive_preds, x='peptide_length', nbins=20,
-                                   title=f'{model_type} Epitope Length Distribution', 
-                                   color_discrete_sequence=["#66C2A5"])
-                fig.update_layout(
+                positive_preds = df_features[df_features['prediction'] == 1]
+                fig5 = px.histogram(positive_preds, x='peptide_length', nbins=20,
+                                    title=f'{model_type} Epitope Length Distribution', 
+                                    color_discrete_sequence=["#66C2A5"])
+                fig5.update_layout(
                     xaxis_title="Epitope Length",
                     yaxis_title="Count",
                     bargap=0.15,
                     font=dict(size=12)
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig5)
 
                 # Allow file download for the predicted epitopes
                 csv = df_features.to_csv(index=False)
