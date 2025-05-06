@@ -227,37 +227,38 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 st.dataframe(df_features)
 
                # Visualizations for feature analysis
-try:
-    # 1. Violin Plot for Immunogenicity Score
-    fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
+         try:
+               #1. Violin Plot for Immunogenicity Score
+              fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
                     title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
-    fig.update_layout(
-        yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
-    )
-    st.plotly_chart(fig, use_container_width=True)
+              fig.update_layout(
+              yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
+             )
+             st.plotly_chart(fig, use_container_width=True)
 
-    # 2. Box Plot for Hydrophobicity
-    fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
+            # 2. Box Plot for Hydrophobicity
+            fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
                  color_discrete_sequence=["#66C2A5"])
-    fig.update_layout(
-        yaxis_title="Hydrophobicity", font=dict(size=12)
-    )
-    st.plotly_chart(fig, use_container_width=True)
+           fig.update_layout(
+           yaxis_title="Hydrophobicity", font=dict(size=12)
+           )
+           st.plotly_chart(fig, use_container_width=True)
 
-    # 3. Pair Plot for Feature Correlations (Using seaborn)
-    pairplot_fig = sns.pairplot(df_features[feature_cols])  # Ensure pairplot returns a figure
-    plt.subplots_adjust(top=0.95)  # Adjust space to prevent cut-off of titles or labels
-    pairplot_fig.fig.suptitle("Pairplot of Features", fontsize=16)  # Add title
-    st.pyplot(pairplot_fig.fig)  # Explicitly use the figure object for st.pyplot()
+        # 3. Correlation Heatmap of Features (instead of pairplot)
+         corr = df_features[feature_cols].corr()  # Compute correlations
+         plt.figure(figsize=(10, 8))
+         sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
+         plt.title("Feature Correlation Heatmap", fontsize=16)
+         st.pyplot()  # Pass the matplotlib figure to Streamlit
 
     # 4. Confusion Matrix Plot (using seaborn heatmap)
-    cm = confusion_matrix(Y_test, Y_pred)
-    cm_fig, ax = plt.subplots(figsize=(8, 6))  # Explicit figure and axis creation
-    sns.heatmap(cm, annot=True, fmt='d', cmap="Blues", ax=ax)
-    ax.set_xlabel("Predicted")
-    ax.set_ylabel("True")
-    ax.set_title("Confusion Matrix", fontsize=16)
-    st.pyplot(cm_fig)  # Explicitly pass the confusion matrix figure to st.pyplot()
+        cm = confusion_matrix(Y_test, Y_pred)
+        cm_fig, ax = plt.subplots(figsize=(8, 6))  # Create figure and axis
+        sns.heatmap(cm, annot=True, fmt='d', cmap="Blues", ax=ax)  # Create heatmap
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("True")
+        ax.set_title("Confusion Matrix", fontsize=16)
+        st.pyplot(cm_fig)  # Pass the confusion matrix figure to st.pyplot()
 
-except Exception as e:
+   except Exception as e:
     st.error(f"Error in prediction or visualization: {str(e)}")
