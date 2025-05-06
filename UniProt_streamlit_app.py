@@ -177,6 +177,11 @@ elif page == "Model Training":
 
 # Epitope prediction
 
+# Utility function to convert DataFrame to CSV
+@st.cache_data
+def convert_df_to_csv(df):
+    return df.to_csv(index=False).encode('utf-8')
+
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
     
@@ -196,7 +201,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
     if st.button("Generate Epitopes and Predict"):
-        if sequence.strip() != "":  # Ensure sequence is not empty
+        if sequence.strip() != "":
             df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
             df_features = add_features(df)
 
@@ -207,56 +212,44 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
             ]
 
             try:
-                # Check if model file exists, else display error
                 model_file = f"{model_type.lower()}-rf_model.pkl"
+                scaler_file = f"{model_type.lower()}-scaler.pkl"
+
                 if not os.path.exists(model_file):
                     st.error(f"Model file '{model_file}' not found. Please train the model first.")
-                    
-                model = joblib.load(model_file)
-                scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
+                else:
+                    model = joblib.load(model_file)
+                    scaler = joblib.load(scaler_file)
 
-                X_pred = df_features[feature_cols]
-                X_scaled = scaler.transform(X_pred)
-                predictions = model.predict(X_scaled)
+                    X_pred = df_features[feature_cols]
+                    X_scaled = scaler.transform(X_pred)
+                    predictions = model.predict(X_scaled)
 
-                df_features['prediction'] = predictions
+                    df_features['prediction'] = predictions
 
-                st.success(f"Predicted {len(df_features)} peptides.")
-                st.dataframe(df_features)  # Display the predictions
+                    st.success(f"Predicted {len(df_features)} peptides.")
+                    st.dataframe(df_features)
 
-                # Provide a download button for the dataframe
-                csv = convert_df_to_csv(df_features)  # Convert the dataframe to CSV
-                st.download_button(
-                    label="Download Prediction Results",
-                    data=csv,
-                    file_name="epitope_predictions.csv",
-                    mime="text/csv"
-                )
-
-                # Visualizations for feature analysis
-                try:
-                    # 1. Violin Plot for the Immunogenicity Score
-                    fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
-                                    title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
-                    fig.update_layout(
-                        yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
+                    # Download button
+                    csv = convert_df_to_csv(df_features)
+                    st.download_button(
+                        label="Download Prediction Results as CSV",
+                        data=csv,
+                        file_name=f'{model_type}_epitope_predictions.csv',
+                        mime='text/csv'
                     )
-                    st.plotly_chart(fig, use_container_width=True)
 
-                    # 2. Box Plot for Hydrophobicity
-                    fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
-                                 color_discrete_sequence=["#66C2A5"])
-                    fig.update_layout(
-                        yaxis_title="Hydrophobicity", font=dict(size=12)
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
+                    # Visualization
+                    fig1 = px.violin(df_features, y="immunogenicity_score", box=True, points="all",
+                                     title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
+                    st.plotly_chart(fig1, use_container_width=True)
 
-                    # 3. Pair Plot for Feature Correlations
-                    fig = sns.pairplot(df_features[feature_cols])
-                    st.pyplot(fig)  # Explicitly pass the figure object
+                    fig2 = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
+                                  color_discrete_sequence=["#66C2A5"])
+                    st.plotly_chart(fig2, use_container_width=True)
 
-                except Exception as e:
-                    st.error(f"Error in visualization: {str(e)}")
+                    fig3 = sns.pairplot(df_features[feature_cols])
+                    st.pyplot(fig3)
 
             except Exception as e:
                 st.error(f"Error in prediction: {str(e)}")
