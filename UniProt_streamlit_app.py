@@ -1,6 +1,6 @@
-# This Python (Pandas) code can be used to predict the Tcell and B cell epitoe using Uni_prot ID or Protein sequence
-# Import all required libraries
+# This Python (Pandas) code can be used to predict the Tcell and B cell epitope using UniProt ID or Protein sequence
 
+# Import all required libraries
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -17,25 +17,26 @@ import requests
 import random
 import joblib
 
-# Step 1: Upload the csv file from the download. I have used sars covid data for training. I used IEDB and UniProt to extract the B cell and T cell epitope seq for training the model.
+# Step 1: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
 @st.cache_data
+
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
     covid_url = "https://drive.google.com/uc?id=13JRk-wG8GggBTA-3J1U4R5x3nhrT7KbY&export=download"
     sars_url = "https://drive.google.com/uc?id=1hlza1PsXkHiBqzhpZpVKcLDlLUs4aQtj&export=download"
     Tcell_url = "https://drive.google.com/uc?id=1wYhEDx7pRxiHzD58R2ihfDrSp5Bu68cc&export=download"
 
-    df_bcell = pd.read_csv(bcell_url) # sars b cell data
-    df_tcell = pd.read_csv(Tcell_url) # sars b cell data
-    df_sars = pd.read_csv(sars_url) # sars data
-    df_test = pd.read_csv(covid_url) # SARS-CoV-2 cell data
+    df_bcell = pd.read_csv(bcell_url)
+    df_tcell = pd.read_csv(Tcell_url)
+    df_sars = pd.read_csv(sars_url)
+    df_test = pd.read_csv(covid_url)
 
     df_train_b = pd.concat([df_bcell, df_sars])
     df_train_t = pd.concat([df_tcell, df_sars])
 
-    return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t  
+    return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
-# Step 2: define all the feature what we want to use to get the data for future 
+# Step 2: Feature Engineering
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -43,24 +44,21 @@ def add_features(df):
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
 
-# Step 3: Define the dataframe for peptides generation
-
+# Step 3: Generate peptides from sequence
 def generate_peptides(sequence, min_length=8, max_length=11):
-    peptides = [] # empty list where predicted peptides list should store back
+    peptides = []
     for length in range(min_length, max_length + 1):
         for i in range(len(sequence) - length + 1):
-            peptides.append((i + 1, i + length, sequence[i:i + length])) # generate all the peptide and append into the list 
+            peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
 
-# Step 4: Simulate input data to add all the feature and condition we want to include in the peptides list
-
-def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):  # parent_id and and organism is unknown and it will be decided based on the input.
-    valid_aa = set("ACDEFGHIKLMNPQRSTVWY") # sometime amino acids sequence are not with right code or na so it is better to valid the sequence to avaoid the error while generating the peptide seq
+# Step 4: Simulate peptide feature data
+def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
+    valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
     rows = []
 
     for start, end, pep in peptides:
-        # avaoid the peptides seq with invalid amino acids
         if not set(pep).issubset(valid_aa):
             continue
         try:
@@ -83,31 +81,28 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):  # pare
                 "immunogenicity_score": round(random.uniform(0.0, 1.0), 3)
             }
             rows.append(row)
-        except Exception as e:
-            # Skip peptides that still cause errors
+        except Exception:
             continue
 
     return pd.DataFrame(rows)
 
-# Step 5: Define the function to directly Fetch the UniProt_id from UniProt or protein_seq we provide
+# Step 5: To predict the epitope Fetch sequence or from UniProt_id from Uniprot for your protein of interest
 
 def fetch_sequence_from_uniprot(uniprot_id):
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
     if response.ok:
-        fasta = response.text
-        lines = fasta.split("\n")
+        lines = response.text.split("\n")
         seq = "".join(lines[1:])
         name = lines[0].split("|")[-1].strip()
         return seq, name
     return None, None
 
-# Step 6: Once data is fetch for input then we can run the Streamlit 
+# Load the datasets in the Streamlit
 
-st.set_page_config(layout="wide") # font and side bar menu
-st.title("B-cell and T-cell Epitope Predictor") # this is the title
-
-page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "T cell epitope predictor", "B cell epitope predictor"]) # These are the navigator
+st.set_page_config(layout="wide")
+st.title("B-cell and T-cell Epitope Predictor")
+page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "T cell epitope predictor", "B cell epitope predictor"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
 if page == "Data Overview":
@@ -126,7 +121,7 @@ if page == "Data Overview":
     if st.checkbox("Show T-cell Preprocessing"):
         st.dataframe(add_features(df_train_t).head())
 
-#  Train the model for prediction
+#  Train the model for prediction. I have used sars data for training
 
 elif page == "Model Training":
     st.header("Model Training")
