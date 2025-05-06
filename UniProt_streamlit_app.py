@@ -179,7 +179,8 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
-# === EPITOPE PREDICTION ===
+#  Define the function for Epitope prediction and visualization with plot and CSV file
+
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
 
@@ -228,23 +229,19 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                     st.success(f"Predicted {len(df_features)} peptides.")
                     st.dataframe(df_features)
 
+                    st.subheader("Feature Distribution Plots")
+                    for feature in ['immunogenicity_score', 'hydrophobicity', 'stability', 'aromaticity', 'isoelectric_point']:
+                        fig = px.box(df_features, y=feature, color='prediction', title=f"{feature.capitalize()} by Epitope Prediction")
+                        st.plotly_chart(fig, use_container_width=True)
+
+                    st.subheader("Download Predictions")
                     csv = convert_df_to_csv(df_features)
                     st.download_button(
-                        label="Download Prediction Results as CSV",
+                        label="Download Epitope Prediction Results as CSV",
                         data=csv,
                         file_name=f'{model_type}_epitope_predictions.csv',
                         mime='text/csv'
                     )
-
-                    fig1 = px.violin(df_features, y="immunogenicity_score", box=True, points="all",
-                                     title="Immunogenicity Score Distribution")
-                    st.plotly_chart(fig1, use_container_width=True)
-
-                    fig2 = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution")
-                    st.plotly_chart(fig2, use_container_width=True)
-
-                    fig3 = sns.pairplot(df_features[feature_cols])
-                    st.pyplot(fig3)
 
             except Exception as e:
                 st.error(f"Error in prediction: {str(e)}")
