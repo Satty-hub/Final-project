@@ -222,64 +222,38 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 df_features['prediction'] = predictions
 
                 st.success(f"Predicted {len(df_features)} peptides.")
-                st.dataframe(df_features)
+                st.dataframe(df_features)  # Display the predictions
+
+                # Provide a download button for the dataframe
+                csv = convert_df_to_csv(df_features)  # Convert the dataframe to CSV
+                st.download_button(
+                    label="Download Prediction Results",
+                    data=csv,
+                    file_name="epitope_predictions.csv",
+                    mime="text/csv"
+                )
 
                 # Visualizations for feature analysis
-                # 1. Correlation Heatmap of Features
-                corr = df_features[feature_cols].corr()
-                fig = plt.figure(figsize=(10, 8))
-                sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
-                plt.title("Feature Correlation Heatmap", fontsize=16)
-                st.pyplot(fig)
+                try:
+                    # 1. Violin Plot for the Immunogenicity Score
+                    fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
+                                    title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
+                    fig.update_layout(
+                        yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
-                # 2. Violin Plot for Immunogenicity Score
-                fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
-                                title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
-                fig.update_layout(
-                    yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
-                )
-                st.plotly_chart(fig, use_container_width=True)
+                    # 2. Box Plot for Hydrophobicity
+                    fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
+                                 color_discrete_sequence=["#66C2A5"])
+                    fig.update_layout(
+                        yaxis_title="Hydrophobicity", font=dict(size=12)
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
-                # 3. Box Plot for Hydrophobicity
-                fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
-                            color_discrete_sequence=["#66C2A5"])
-                fig.update_layout(
-                    yaxis_title="Hydrophobicity", font=dict(size=12)
-                )
-                st.plotly_chart(fig, use_container_width=True)
+                    # 3. Pair Plot for Feature Correlations
+                    fig = sns.pairplot(df_features[feature_cols])
+                    st.pyplot(fig)  # Explicitly pass the figure object
 
-                # 4. Pair Plot for Feature Relationships
-                fig = sns.pairplot(df_features[feature_cols], height=2.5)
-                plt.suptitle("Pairwise Feature Relationships", size=16, y=1.02)
-                st.pyplot(fig)
-
-                # 5. Histogram for Hydrophobicity
-                fig = px.histogram(df_features, x="hydrophobicity", nbins=30, title="Hydrophobicity Distribution")
-                fig.update_layout(xaxis_title="Hydrophobicity", yaxis_title="Frequency")
-                st.plotly_chart(fig, use_container_width=True)
-
-                # 6. Feature Importance Plot
-                feature_importance = model.feature_importances_
-                importance_df = pd.DataFrame({
-                    'Feature': feature_cols,
-                    'Importance': feature_importance
-                }).sort_values(by='Importance', ascending=False)
-
-                fig = px.bar(importance_df, x="Feature", y="Importance", 
-                             title="Feature Importance", 
-                             labels={'Importance': 'Importance Score', 'Feature': 'Features'},
-                             color='Importance', color_continuous_scale='Viridis')
-                st.plotly_chart(fig, use_container_width=True)
-
-                # 7. Scatter Plot: Peptide Length vs Immunogenicity
-                fig = px.scatter(df_features, x="peptide_length", y="immunogenicity_score", 
-                                 title="Peptide Length vs Immunogenicity Score", 
-                                 color="immunogenicity_score", color_continuous_scale='Viridis')
-                fig.update_layout(
-                    xaxis_title="Peptide Length", yaxis_title="Immunogenicity Score"
-                )
-                st.plotly_chart(fig, use_container_width=True)
-
-            except Exception as e:
-                st.error(f"Error in prediction or visualization: {str(e)}")
-
+                except Exception as e:
+                    st.error(f"Error in prediction or visualization: {str(e)}")
