@@ -17,6 +17,7 @@ import requests
 import random
 import joblib
 import os  # Added import os to check for file existence
+from sklearn.metrics import confusion_matrix
 
 # Step 1: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
 @st.cache_data
@@ -225,10 +226,9 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # Visualizations for feature analysis 
-
+               # Visualizations for feature analysis
 try:
-    # 1. Violin Plot for the Immunogenicity Score
+    # 1. Violin Plot for Immunogenicity Score
     fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
                     title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
     fig.update_layout(
@@ -245,16 +245,19 @@ try:
     st.plotly_chart(fig, use_container_width=True)
 
     # 3. Pair Plot for Feature Correlations (Using seaborn)
-    fig = sns.pairplot(df_features[feature_cols])
-    st.pyplot(fig)  # Explicitly pass the figure object to st.pyplot
+    pairplot_fig = sns.pairplot(df_features[feature_cols])  # Ensure pairplot returns a figure
+    plt.subplots_adjust(top=0.95)  # Adjust space to prevent cut-off of titles or labels
+    pairplot_fig.fig.suptitle("Pairplot of Features", fontsize=16)  # Add title
+    st.pyplot(pairplot_fig.fig)  # Explicitly use the figure object for st.pyplot()
 
-    # 4. Confusion Matrix Plot (if needed)
+    # 4. Confusion Matrix Plot (using seaborn heatmap)
     cm = confusion_matrix(Y_test, Y_pred)
-    fig, ax = plt.subplots()  # Explicitly create the figure
-    sns.heatmap(cm, annot=True, fmt='d', ax=ax)
+    cm_fig, ax = plt.subplots(figsize=(8, 6))  # Explicit figure and axis creation
+    sns.heatmap(cm, annot=True, fmt='d', cmap="Blues", ax=ax)
     ax.set_xlabel("Predicted")
     ax.set_ylabel("True")
-    st.pyplot(fig)  # Explicitly pass the figure object to st.pyplot
+    ax.set_title("Confusion Matrix", fontsize=16)
+    st.pyplot(cm_fig)  # Explicitly pass the confusion matrix figure to st.pyplot()
 
 except Exception as e:
     st.error(f"Error in prediction or visualization: {str(e)}")
