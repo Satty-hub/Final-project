@@ -183,10 +183,15 @@ elif page == "Model Training":
 
 # Input for the Prediction model
 
-elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
+import plotly.express as px
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+
+elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
     
-    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"]) # Input you want to choose from
+    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"])
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
     default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
     sequence = None
@@ -199,10 +204,9 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
     
-    # Set model type based on navigation choice
     model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
-    if st.button("Generate Epitopes and Predict"):  # Button to trigger the prediction
+    if st.button("Generate Epitopes and Predict"):
         if sequence.strip() != "":  # Ensure sequence is not empty
             df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
             df_features = add_features(df)
@@ -224,30 +228,74 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
 
                 df_features['prediction'] = predictions
 
-                # Display success message and the predictions table
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # Feature distributions visualization
-                st.subheader("Peptide Feature Distributions")
-                feature_cols_to_plot = [
-                    'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
-                    'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
-                    'parker', 'immunogenicity_score'
-                ]
+                # **Different types of visualizations for feature analysis**
 
-                # Use Plotly for better interactive plots
-                for col in feature_cols_to_plot:
-                    if col in df_features.columns:
-                        fig = px.histogram(df_features, x=col, nbins=30, title=f'Distribution of {col}',
-                                           template='plotly_dark', color_discrete_sequence=["#FF6F61"])
-                        fig.update_layout(
-                            xaxis_title=col,
-                            yaxis_title="Frequency",
-                            bargap=0.2,
-                            font=dict(size=12)
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
+                # 1. **Violin Plot** for the **Immunogenicity Score** (to see distribution)
+                if 'immunogenicity_score' in df_features.columns:
+                    fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all",
+                                   title="Immunogenicity Score Distribution", 
+                                   color_discrete_sequence=["#FF6F61"])
+                    fig.update_layout(
+                        yaxis_title="Immunogenicity Score",
+                        xaxis_title="Distribution",
+                        font=dict(size=12)
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+                # 2. **Box Plot** for the **Hydrophobicity** feature
+                fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
+                             color_discrete_sequence=["#66C2A5"])
+                fig.update_layout(
+                    yaxis_title="Hydrophobicity",
+                    font=dict(size=12)
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+                # 3. **Correlation Heatmap** for feature correlations
+                correlation_matrix = df_features[feature_cols].corr()
+                plt.figure(figsize=(10, 8))
+                sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt='.2f', linewidths=0.5)
+                st.pyplot(plt, use_container_width=True)
+
+                # 4. **Pairplot (Scatter Plot Matrix)** for selected features
+                selected_features = ['peptide_length', 'hydrophobicity', 'stability', 'aromaticity', 'emini']
+                sns.pairplot(df_features[selected_features], hue="prediction", palette="Set1")
+                st.pyplot(plt, use_container_width=True)
+
+                # 5. **Radar Plot** for peptide features like **hydrophobicity, stability, etc.**
+                if len(df_features) > 1:
+                    peptide_example = df_features.iloc[0]  # Take one example peptide
+                    features = ['hydrophobicity', 'stability', 'aromaticity', 'peptide_length', 'isoelectric_point']
+                    values = peptide_example[features].values.flatten().tolist()
+                    categories = features
+
+                    fig = plt.figure(figsize=(6, 6))
+                    ax = fig.add_subplot(111, polar=True)
+                    angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
+                    values += values[:1]  # Complete the loop
+                    angles += angles[:1]
+                    ax.fill(angles, values, color='teal', alpha=0.25)
+                    ax.plot(angles, values, color='teal', linewidth=2)
+                    ax.set_yticklabels([])
+                    ax.set_xticks(angles[:-1])
+                    ax.set_xticklabels(categories)
+                    ax.set_title('Radar Plot for Peptide Features', size=14)
+                    st.pyplot(fig, use_container_width=True)
+
+                # 6. **Feature Importance Plot** using the trained RandomForest model
+                feature_importances = model.feature_importances_
+                importance_df = pd.DataFrame({
+                    'Feature': feature_cols,
+                    'Importance': feature_importances
+                }).sort_values(by='Importance', ascending=False)
+
+                fig = px.bar(importance_df, x='Feature', y='Importance', title="Feature Importance",
+                             color='Importance', color_continuous_scale='Viridis')
+                fig.update_layout(xaxis_title="Feature", yaxis_title="Importance", font=dict(size=12))
+                st.plotly_chart(fig, use_container_width=True)
 
                 # Positive predictions stats
                 positive_preds = df_features[df_features['prediction'] == 1]
@@ -256,10 +304,10 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
                 st.metric("Average Epitope Length", f"{positive_preds['peptide_length'].mean():.2f}")
                 st.metric("Total Epitope Length", f"{positive_preds['peptide_length'].sum():.2f}")
 
-                # Epitope length histogram with a customized Plotly figure
+                # Epitope length histogram with customized Plotly figure
                 st.subheader(f"{model_type} Epitope Length Distribution")
-                fig = px.histogram(positive_preds, x='peptide_length', nbins=20, 
-                                   title=f'{model_type} Epitope Length Distribution',
+                fig = px.histogram(positive_preds, x='peptide_length', nbins=20,
+                                   title=f'{model_type} Epitope Length Distribution', 
                                    color_discrete_sequence=["#66C2A5"])
                 fig.update_layout(
                     xaxis_title="Epitope Length",
@@ -275,4 +323,3 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
 
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
-
