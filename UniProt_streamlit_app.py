@@ -183,10 +183,10 @@ elif page == "Model Training":
 
 # Input for the Prediction model
 
-elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
-    st.header("Epitope Prediction")
+elif page == "Epitope Prediction":
+    st.header("Epitope Prediction with Model")
     
-    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"]) # Input you want to choose from
+    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Other"])
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
     default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
     sequence = None
@@ -198,23 +198,21 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     if not sequence:
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
-    
-    # Set model type based on navigation choice
 
-    if st.button("Generate Epitopes and Predict"):  # Button to trigger the prediction
+    if st.button("Generate Epitopes and Predict"):
         try:
-            if sequence.strip() != "":  # Ensure sequence is not empty
-                 df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
-                 df_features = add_features(df)
+            if sequence.strip() != "":
+                df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
+                df_features = add_features(df)
 
-                 feature_cols = [
-                    'protein_seq_length', 'parent_protein_id_length',
+                feature_cols = [
+                    'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
                     'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
                     'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
                 ]
 
-                # Load the pre-trained model and scaler based on the selected model type
-            
+                # Load the pre-trained model and scaler
+                
                 model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
                 scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
 
@@ -259,7 +257,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
                         st.plotly_chart(fig, use_container_width=True)
 
                 # Positive Predictions Stats
-            
+                
                 positive_preds = df_features[df_features['prediction'] == 1]
                 st.subheader(f"{model_type} Epitope Summary")
                 st.metric("Number of Predicted Epitopes", len(positive_preds))
@@ -267,7 +265,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
                 st.metric("Total Epitope Length", f"{positive_preds['peptide_length'].sum():.2f}")
 
                 # Epitope Length Histogram Visualization (Nicer Graph)
-            
+                
                 fig2 = px.histogram(
                     positive_preds, 
                     x='peptide_length', 
@@ -289,7 +287,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
                 st.plotly_chart(fig2, use_container_width=True)
 
                 # Allow file download for predicted epitopes
-            
+                
                 csv = df_features.to_csv(index=False)
                 st.download_button("Download Predicted CSV", data=csv, file_name="predicted_epitopes.csv")
 
