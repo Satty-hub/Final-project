@@ -1,4 +1,5 @@
 # This Python (Pandas) code can be used to predict the T-cell and B-cell epitope using UniProt ID or Protein sequence
+
 # Import all required libraries
 
 import streamlit as st
@@ -16,7 +17,7 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import requests
 import random
 import joblib
-import os  # Added import os to check for file existence
+import os
 
 # Step 1: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
 @st.cache_data
@@ -87,7 +88,6 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     return pd.DataFrame(rows)
 
 # Step 5: To predict the epitope Fetch sequence or from UniProt_id from Uniprot for your protein of interest
-
 def fetch_sequence_from_uniprot(uniprot_id):
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
@@ -98,13 +98,18 @@ def fetch_sequence_from_uniprot(uniprot_id):
         return seq, name
     return None, None
 
-# Load the datasets in the Streamlit
+# Utility to download CSV
+@st.cache_data
+def convert_df_to_csv(df):
+    return df.to_csv(index=False).encode('utf-8')
 
+# Streamlit Layout and Navigation
 st.set_page_config(layout="wide")
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "T cell epitope predictor", "B cell epitope predictor"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
+# === DATA OVERVIEW ===
 if page == "Data Overview":
     st.header("Data Overview")
     st.subheader("B-cell Dataset")
@@ -121,8 +126,7 @@ if page == "Data Overview":
     if st.checkbox("Show T-cell Preprocessing"):
         st.dataframe(add_features(df_train_t).head())
 
-# define the function for epitope prediction
-
+# === MODEL TRAINING ===
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -134,7 +138,7 @@ elif page == "Model Training":
         'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
         'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
     ]
-    
+
     df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
     df = df.dropna(subset=['target'])
 
@@ -155,7 +159,7 @@ elif page == "Model Training":
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
 
     if st.button("Train Random Forest"):
-        model = RandomForestClassifier(n_estimators=500, random_state=random_state) 
+        model = RandomForestClassifier(n_estimators=500, random_state=random_state)
         model.fit(X_train, Y_train)
         Y_pred = model.predict(X_test)
 
@@ -175,18 +179,10 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
-# Epitope prediction
-
-# Utility function to convert DataFrame to CSV
-@st.cache_data
-def convert_df_to_csv(df):
-    return df.to_csv(index=False).encode('utf-8')
-    
-# Epitope prediction
-
+# === EPITOPE PREDICTION ===
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
-    
+
     organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"])
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
     default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
@@ -199,7 +195,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     if not sequence:
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
-    
+
     model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
     if st.button("Generate Epitopes and Predict"):
@@ -232,7 +228,6 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                     st.success(f"Predicted {len(df_features)} peptides.")
                     st.dataframe(df_features)
 
-                    # Download button
                     csv = convert_df_to_csv(df_features)
                     st.download_button(
                         label="Download Prediction Results as CSV",
@@ -241,13 +236,11 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                         mime='text/csv'
                     )
 
-                    # Visualization
                     fig1 = px.violin(df_features, y="immunogenicity_score", box=True, points="all",
-                                     title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
+                                     title="Immunogenicity Score Distribution")
                     st.plotly_chart(fig1, use_container_width=True)
 
-                    fig2 = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
-                                  color_discrete_sequence=["#66C2A5"])
+                    fig2 = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution")
                     st.plotly_chart(fig2, use_container_width=True)
 
                     fig3 = sns.pairplot(df_features[feature_cols])
