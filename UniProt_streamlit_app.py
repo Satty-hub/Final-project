@@ -175,6 +175,7 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
+# Epitope prediction
 
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
@@ -210,7 +211,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 model_file = f"{model_type.lower()}-rf_model.pkl"
                 if not os.path.exists(model_file):
                     st.error(f"Model file '{model_file}' not found. Please train the model first.")
-                    return
+                    return  # This 'return' can be removed, as Streamlit handles flow naturally
 
                 model = joblib.load(model_file)
                 scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
