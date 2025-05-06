@@ -1,5 +1,4 @@
 # This Python (Pandas) code can be used to predict the Tcell and B cell epitope using UniProt ID or Protein sequence
-
 # Import all required libraries
 import streamlit as st
 import pandas as pd
@@ -19,7 +18,6 @@ import joblib
 
 # Step 1: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
 @st.cache_data
-
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
     covid_url = "https://drive.google.com/uc?id=13JRk-wG8GggBTA-3J1U4R5x3nhrT7KbY&export=download"
@@ -87,14 +85,13 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     return pd.DataFrame(rows)
 
 # Step 5: To predict the epitope Fetch sequence or from UniProt_id from Uniprot for your protein of interest
-
 def fetch_sequence_from_uniprot(uniprot_id):
-    url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.fasta"
+    url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
     if response.ok:
         lines = response.text.split("\n")
-        seq = "".join(line.strip() for line in lines if not line.startswith(">"))
-        name = lines[0].split("|")[-1].strip() if lines and lines[0].startswith(">") else uniprot_id
+        seq = "".join(lines[1:])
+        name = lines[0].split("|")[-1].strip()
         return seq, name
     return None, None
 
