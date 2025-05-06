@@ -184,7 +184,7 @@ elif page == "Model Training":
 # Input for the Prediction model
 
 elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
-    st.header("Epitope Prediction with Model")
+    st.header("Epitope Prediction")
     
     organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"]) # Input you want to choose from
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
