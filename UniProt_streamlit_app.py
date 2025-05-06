@@ -1,6 +1,6 @@
 # This Python (Pandas) code can be used to predict the T-cell and B-cell epitope using UniProt ID or Protein sequence
-
 # Import all required libraries
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -17,7 +17,6 @@ import requests
 import random
 import joblib
 import os  # Added import os to check for file existence
-from sklearn.metrics import confusion_matrix
 
 # Step 1: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
 @st.cache_data
@@ -226,39 +225,39 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-               # Visualizations for feature analysis
-         try:
-               #1. Violin Plot for Immunogenicity Score
-              fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
-                    title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
-              fig.update_layout(
-              yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
-             )
-             st.plotly_chart(fig, use_container_width=True)
+                # Visualizations for feature analysis
+                # 1. Correlation Heatmap of Features
+                corr = df_features[feature_cols].corr()
+                fig = plt.figure(figsize=(10, 8))
+                sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
+                plt.title("Feature Correlation Heatmap", fontsize=16)
+                st.pyplot(fig)
 
-            # 2. Box Plot for Hydrophobicity
-            fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
-                 color_discrete_sequence=["#66C2A5"])
-           fig.update_layout(
-           yaxis_title="Hydrophobicity", font=dict(size=12)
-           )
-           st.plotly_chart(fig, use_container_width=True)
+                # 2. Violin Plot for Immunogenicity Score
+                fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
+                                title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
+                fig.update_layout(
+                    yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
+                )
+                st.plotly_chart(fig, use_container_width=True)
 
-        # 3. Correlation Heatmap of Features (instead of pairplot)
-         corr = df_features[feature_cols].corr()  # Compute correlations
-         plt.figure(figsize=(10, 8))
-         sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
-         plt.title("Feature Correlation Heatmap", fontsize=16)
-         st.pyplot()  # Pass the matplotlib figure to Streamlit
+                # 3. Box Plot for Hydrophobicity
+                fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
+                            color_discrete_sequence=["#66C2A5"])
+                fig.update_layout(
+                    yaxis_title="Hydrophobicity", font=dict(size=12)
+                )
+                st.plotly_chart(fig, use_container_width=True)
 
-    # 4. Confusion Matrix Plot (using seaborn heatmap)
-        cm = confusion_matrix(Y_test, Y_pred)
-        cm_fig, ax = plt.subplots(figsize=(8, 6))  # Create figure and axis
-        sns.heatmap(cm, annot=True, fmt='d', cmap="Blues", ax=ax)  # Create heatmap
-        ax.set_xlabel("Predicted")
-        ax.set_ylabel("True")
-        ax.set_title("Confusion Matrix", fontsize=16)
-        st.pyplot(cm_fig)  # Pass the confusion matrix figure to st.pyplot()
+                # 4. Confusion Matrix Plot
+                cm = confusion_matrix(Y_test, Y_pred)
+                cm_fig, ax = plt.subplots(figsize=(8, 6))  # Create figure and axis
+                sns.heatmap(cm, annot=True, fmt='d', cmap="Blues", ax=ax)  # Create heatmap
+                ax.set_xlabel("Predicted")
+                ax.set_ylabel("True")
+                ax.set_title("Confusion Matrix", fontsize=16)
+                st.pyplot(cm_fig)  # Pass the confusion matrix figure to st.pyplot()
 
-   except Exception as e:
-    st.error(f"Error in prediction or visualization: {str(e)}")
+            except Exception as e:
+                st.error(f"Error in prediction or visualization: {str(e)}")
+
