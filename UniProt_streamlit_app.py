@@ -183,10 +183,10 @@ elif page == "Model Training":
 
 # Input for the Prediction model
 
-elif page == "Epitope Prediction":
+elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     st.header("Epitope Prediction with Model")
     
-    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Other"])
+    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"]) # Input you want to choose from
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
     default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
     sequence = None
@@ -198,98 +198,81 @@ elif page == "Epitope Prediction":
     if not sequence:
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
+    
+    # Set model type based on navigation choice
+    model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
-    if st.button("Generate Epitopes and Predict"):
-        try:
-            if sequence.strip() != "":
-                df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
-                df_features = add_features(df)
+    if st.button("Generate Epitopes and Predict"):  # Button to trigger the prediction
+        if sequence.strip() != "":  # Ensure sequence is not empty
+            df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
+            df_features = add_features(df)
 
-                feature_cols = [
-                    'protein_seq_length', 'peptide_seq_length', 'parent_protein_id_length',
-                    'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
-                    'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
-                ]
+            feature_cols = [
+                'protein_seq_length', 'parent_protein_id_length',
+                'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
+                'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
+            ]
 
-                # Load the pre-trained model and scaler
-                
+            try:
+                # Load the pre-trained model and scaler based on the selected model type
                 model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
                 scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
 
-                # Prepare features for prediction
                 X_pred = df_features[feature_cols]
                 X_scaled = scaler.transform(X_pred)
                 predictions = model.predict(X_scaled)
 
                 df_features['prediction'] = predictions
 
+                # Display success message and the predictions table
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # Feature Distributions Visualization (Colorful and Nice)
-                st.subheader("Enhanced Peptide Feature Distributions")
+                # Feature distributions visualization
+                st.subheader("Peptide Feature Distributions")
                 feature_cols_to_plot = [
                     'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
                     'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
                     'parker', 'immunogenicity_score'
                 ]
 
+                # Use Plotly for better interactive plots
                 for col in feature_cols_to_plot:
                     if col in df_features.columns:
-                        fig = px.histogram(
-                            df_features,
-                            x=col,
-                            nbins=20,
-                            title=f'Distribution of {col}',
-                            color_discrete_sequence=px.colors.qualitative.Set2  # Colorful theme
-                        )
+                        fig = px.histogram(df_features, x=col, nbins=30, title=f'Distribution of {col}',
+                                           template='plotly_dark', color_discrete_sequence=["#FF6F61"])
                         fig.update_layout(
-                            title_font=dict(size=18, family="Arial"),
                             xaxis_title=col,
                             yaxis_title="Frequency",
-                            template="plotly_white",
-                            bargap=0.15
-                        )
-                        fig.update_traces(
-                            hovertemplate=f"<b>{col}</b>: %{{x}}<br>Count: %{{y}}",
-                            marker=dict(line=dict(width=1, color='DarkSlateGrey'))
+                            bargap=0.2,
+                            font=dict(size=12)
                         )
                         st.plotly_chart(fig, use_container_width=True)
 
-                # Positive Predictions Stats
-                
+                # Positive predictions stats
                 positive_preds = df_features[df_features['prediction'] == 1]
                 st.subheader(f"{model_type} Epitope Summary")
                 st.metric("Number of Predicted Epitopes", len(positive_preds))
                 st.metric("Average Epitope Length", f"{positive_preds['peptide_length'].mean():.2f}")
                 st.metric("Total Epitope Length", f"{positive_preds['peptide_length'].sum():.2f}")
 
-                # Epitope Length Histogram Visualization (Nicer Graph)
-                
-                fig2 = px.histogram(
-                    positive_preds, 
-                    x='peptide_length', 
-                    nbins=10, 
-                    title=f'{model_type} Epitope Length Distribution',
-                    color_discrete_sequence=px.colors.sequential.Plasma
-                )
-                fig2.update_layout(
-                    title_font=dict(size=18, family="Arial"),
+                # Epitope length histogram with a customized Plotly figure
+                st.subheader(f"{model_type} Epitope Length Distribution")
+                fig = px.histogram(positive_preds, x='peptide_length', nbins=20, 
+                                   title=f'{model_type} Epitope Length Distribution',
+                                   color_discrete_sequence=["#66C2A5"])
+                fig.update_layout(
                     xaxis_title="Epitope Length",
-                    yaxis_title="Frequency",
-                    template="plotly_dark",
-                    bargap=0.2
+                    yaxis_title="Count",
+                    bargap=0.15,
+                    font=dict(size=12)
                 )
-                fig2.update_traces(
-                    hovertemplate="<b>Length:</b> %{{x}}<br><b>Frequency:</b> %{{y}}",
-                    marker=dict(line=dict(width=2, color='Black'))
-                )
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True)
 
-                # Allow file download for predicted epitopes
-                
+                # Allow file download for the predicted epitopes
                 csv = df_features.to_csv(index=False)
                 st.download_button("Download Predicted CSV", data=csv, file_name="predicted_epitopes.csv")
 
-        except Exception as e:
-            st.error(f"Prediction failed: {e}")
+            except Exception as e:
+                st.error(f"Prediction failed: {e}")
+
