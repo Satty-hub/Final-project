@@ -1,3 +1,4 @@
+
 # This Python (Pandas) code can be used to predict the T-cell and B-cell epitope using UniProt ID or Protein sequence
 
 # Import all required libraries
@@ -230,4 +231,12 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 fig.update_layout(
                     yaxis_title="Hydrophobicity", font=dict(size=12)
                 )
-                st.plot
+                st.plotly_chart(fig, use_container_width=True)
+
+                # 3. Pair Plot for Feature Correlations
+                sns.pairplot(df_features[feature_cols])
+                st.pyplot()
+
+            except Exception as e:
+                st.error(f"Error in prediction: {str(e)}")
+
