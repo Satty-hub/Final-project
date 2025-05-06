@@ -183,11 +183,6 @@ elif page == "Model Training":
 
 # Input for the Prediction model
 
-import plotly.express as px
-import seaborn as sns
-import matplotlib.pyplot as plt
-import numpy as np
-
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
     
