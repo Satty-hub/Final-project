@@ -1,7 +1,6 @@
-
 # This Python (Pandas) code can be used to predict the T-cell and B-cell epitope using UniProt ID or Protein sequence
+# Step 1: Import all required libraries
 
-# Import all required libraries
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -18,7 +17,7 @@ import requests
 import random
 import joblib
 
-# Step 1: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
+# Step 2: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
 @st.cache_data
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
@@ -36,7 +35,7 @@ def load_data():
 
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
-# Step 2: Feature Engineering
+# Step 3: Feature Engineering
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -44,7 +43,7 @@ def add_features(df):
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
 
-# Step 3: Generate peptides from sequence
+# Step 4: Generate peptides from sequence
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
@@ -52,7 +51,7 @@ def generate_peptides(sequence, min_length=8, max_length=11):
             peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
 
-# Step 4: Simulate peptide feature data
+# Step 5: Simulate peptide feature data
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
@@ -86,8 +85,7 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
 
     return pd.DataFrame(rows)
 
-# Step 5: To predict the epitope Fetch sequence or from UniProt_id from Uniprot for your protein of interest
-
+# Step 6: Fetch sequence from UniProt
 def fetch_sequence_from_uniprot(uniprot_id):
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
@@ -98,13 +96,13 @@ def fetch_sequence_from_uniprot(uniprot_id):
         return seq, name
     return None, None
 
-# Load the datasets in the Streamlit
-
+# Step 7: Streamlit Interface Setup
 st.set_page_config(layout="wide")
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "T cell epitope predictor", "B cell epitope predictor"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
+# Step 8: Data Overview
 if page == "Data Overview":
     st.header("Data Overview")
     st.subheader("B-cell Dataset")
@@ -121,8 +119,7 @@ if page == "Data Overview":
     if st.checkbox("Show T-cell Preprocessing"):
         st.dataframe(add_features(df_train_t).head())
 
-# define the function for epitope prediction
-
+# Step 9: Model Training
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -175,8 +172,7 @@ elif page == "Model Training":
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
         st.success(f"Model and Scaler saved as '{choice.lower()}-rf_model.pkl' and '{choice.lower()}-scaler.pkl'")
 
-# Epitope prediction
-
+# Step 10: Epitope Prediction
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
     
