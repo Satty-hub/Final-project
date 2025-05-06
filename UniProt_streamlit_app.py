@@ -256,4 +256,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                     st.pyplot(fig)  # Explicitly pass the figure object
 
                 except Exception as e:
-                    st.error(f"Error in prediction or visualization: {str(e)}")
+                    st.error(f"Error in visualization: {str(e)}")
+
+            except Exception as e:
+                st.error(f"Error in prediction: {str(e)}")
