@@ -249,15 +249,6 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
-                # 4. Confusion Matrix Plot
-                cm = confusion_matrix(Y_test, Y_pred)
-                cm_fig, ax = plt.subplots(figsize=(8, 6))  # Create figure and axis
-                sns.heatmap(cm, annot=True, fmt='d', cmap="Blues", ax=ax)  # Create heatmap
-                ax.set_xlabel("Predicted")
-                ax.set_ylabel("True")
-                ax.set_title("Confusion Matrix", fontsize=16)
-                st.pyplot(cm_fig)  # Pass the confusion matrix figure to st.pyplot()
-
             except Exception as e:
                 st.error(f"Error in prediction or visualization: {str(e)}")
 
