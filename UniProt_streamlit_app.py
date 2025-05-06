@@ -183,7 +183,7 @@ elif page == "Model Training":
 
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Prediction with Model")
-
+    
     organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"])
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
     default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
@@ -196,26 +196,26 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     if not sequence:
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
-
+    
     model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
     if st.button("Generate Epitopes and Predict"):
         if sequence.strip() != "":
-            df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
-            df_features = add_features(df)
-
-            feature_cols = [
-                'protein_seq_length', 'parent_protein_id_length',
-                'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
-                'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
-            ]
-
             try:
+                df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
+                df_features = add_features(df)
+
+                feature_cols = [
+                    'protein_seq_length', 'parent_protein_id_length',
+                    'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
+                    'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
+                ]
+
                 model_file = f"{model_type.lower()}-rf_model.pkl"
                 scaler_file = f"{model_type.lower()}-scaler.pkl"
 
-                if not os.path.exists(model_file):
-                    st.error(f"Model file '{model_file}' not found. Please train the model first.")
+                if not os.path.exists(model_file) or not os.path.exists(scaler_file):
+                    st.error(f"Model or scaler file not found. Please train the model first.")
                 else:
                     model = joblib.load(model_file)
                     scaler = joblib.load(scaler_file)
@@ -229,19 +229,49 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                     st.success(f"Predicted {len(df_features)} peptides.")
                     st.dataframe(df_features)
 
-                    st.subheader("Feature Distribution Plots")
-                    for feature in ['immunogenicity_score', 'hydrophobicity', 'stability', 'aromaticity', 'isoelectric_point']:
-                        fig = px.box(df_features, y=feature, color='prediction', title=f"{feature.capitalize()} by Epitope Prediction")
-                        st.plotly_chart(fig, use_container_width=True)
+                    # Visualizations of the features to get good idea how good the peptides are
 
-                    st.subheader("Download Predictions")
+                    # Violin Plot
+                    st.subheader("Immunogenicity Score Distribution")
+                    fig1 = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
+                                     title="Immunogenicity Score", color_discrete_sequence=["#FF6F61"])
+                    st.plotly_chart(fig1, use_container_width=True)
+
+                    # Box Plot
+                    st.subheader("Hydrophobicity Distribution")
+                    fig2 = px.box(df_features, y="hydrophobicity", title="Hydrophobicity", 
+                                  color_discrete_sequence=["#66C2A5"])
+                    st.plotly_chart(fig2, use_container_width=True)
+
+                    # Correlation Heatmap
+                    st.subheader("Feature Correlation Heatmap")
+                    corr = df_features[feature_cols].corr()
+                    fig3, ax = plt.subplots(figsize=(10, 6))
+                    sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f", ax=ax)
+                    st.pyplot(fig3)
+
+                    # Pairplot
+                    st.subheader("Pairwise Feature Relationships")
+                    import warnings
+                    warnings.filterwarnings("ignore")
+                    fig4 = sns.pairplot(df_features[feature_cols + ['prediction']], hue='prediction', palette='husl')
+                    st.pyplot(fig4)
+
+                    #  Download the predicted epitope as csv file
+
+                    st.subheader("Download Predictions as CSV")
+
+                    @st.cache_data
+                    def convert_df_to_csv(df):
+                        return df.to_csv(index=False).encode("utf-8")
+
                     csv = convert_df_to_csv(df_features)
                     st.download_button(
-                        label="Download Epitope Prediction Results as CSV",
+                        label="Download Epitope Predictions",
                         data=csv,
-                        file_name=f'{model_type}_epitope_predictions.csv',
-                        mime='text/csv'
+                        file_name=f"{protein_name}_epitope_predictions.csv",
+                        mime="text/csv"
                     )
 
             except Exception as e:
-                st.error(f"Error in prediction: {str(e)}")
+                st.error(f"Error in prediction or visualization: {str(e)}")
