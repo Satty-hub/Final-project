@@ -227,24 +227,36 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
 
                 # **Visualizations for feature analysis**
 
-                # 1. Violin Plot for the Immunogenicity Score
-                fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
-                                title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
-                fig.update_layout(
-                    yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
-                )
-                st.plotly_chart(fig, use_container_width=True)
+            
 
-                # 2. Box Plot for Hydrophobicity
-                fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
-                             color_discrete_sequence=["#66C2A5"])
-                fig.update_layout(
-                    yaxis_title="Hydrophobicity", font=dict(size=12)
-                )
-                st.plotly_chart(fig, use_container_width=True)
+# 1. Violin Plot for the Immunogenicity Score
+fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
+                title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
+fig.update_layout(
+    yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
+)
+st.plotly_chart(fig, use_container_width=True)
 
-                # 3. Pair Plot for Feature Correlations
-                sns.pairplot(df_features[feature_cols])
+# 2. Box Plot for Hydrophobicity
+fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
+             color_discrete_sequence=["#66C2A5"])
+fig.update_layout(
+    yaxis_title="Hydrophobicity", font=dict(size=12)
+)
+st.plotly_chart(fig, use_container_width=True)
+
+# 3. Pair Plot for Feature Correlations
+fig = sns.pairplot(df_features[feature_cols])
+st.pyplot(fig)  # Pass the figure object
+
+# 4. Confusion Matrix Plot (for example, if needed)
+cm = confusion_matrix(Y_test, Y_pred)
+fig, ax = plt.subplots()  # Explicitly creating a figure
+sns.heatmap(cm, annot=True, fmt='d', ax=ax)
+ax.set_xlabel("Predicted")
+ax.set_ylabel("True")
+st.pyplot(fig)  # Pass the figure object
+
                 st.pyplot()
 
             except Exception as e:
