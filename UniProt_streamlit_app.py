@@ -221,12 +221,13 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 X_scaled = scaler.transform(X_pred)
                 predictions = model.predict(X_scaled)
 
+                # Add prediction column to dataframe
                 df_features['prediction'] = predictions
 
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # **Different types of visualizations for feature analysis**
+                # **Visualizations for feature analysis**
 
                 # 1. **Violin Plot** for the **Immunogenicity Score** (to see distribution)
                 if 'immunogenicity_score' in df_features.columns:
