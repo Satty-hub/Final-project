@@ -225,12 +225,11 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # **Visualizations for feature analysis**
-
-         # **Visualizations for feature analysis**
+                # Visualizations for feature analysis
 
 try:
     # 1. Violin Plot for the Immunogenicity Score
+    
     fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
                     title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
     fig.update_layout(
@@ -239,6 +238,7 @@ try:
     st.plotly_chart(fig, use_container_width=True)
 
     # 2. Box Plot for Hydrophobicity
+    
     fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
                  color_discrete_sequence=["#66C2A5"])
     fig.update_layout(
@@ -248,17 +248,18 @@ try:
 
     # 3. Pair Plot for Feature Correlations
     fig = sns.pairplot(df_features[feature_cols])
-    st.pyplot(fig)  # Pass the figure object
+    st.pyplot(fig)  # Pass the figure object explicitly
 
-    # 4. Confusion Matrix Plot (for example, if needed)
+    # 4. Confusion Matrix Plot (if needed)
+    
     cm = confusion_matrix(Y_test, Y_pred)
     fig, ax = plt.subplots()  # Explicitly creating a figure
     sns.heatmap(cm, annot=True, fmt='d', ax=ax)
     ax.set_xlabel("Predicted")
     ax.set_ylabel("True")
-    st.pyplot(fig)  # Pass the figure object
+    st.pyplot(fig)  # Pass the figure object explicitly
 
 except Exception as e:
     st.error(f"Error in prediction or visualization: {str(e)}")
-   
+
 
