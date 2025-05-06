@@ -212,7 +212,6 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 if not os.path.exists(model_file):
                     st.error(f"Model file '{model_file}' not found. Please train the model first.")
                     
-                
                 model = joblib.load(model_file)
                 scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
 
@@ -246,6 +245,38 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                             color_discrete_sequence=["#66C2A5"])
                 fig.update_layout(
                     yaxis_title="Hydrophobicity", font=dict(size=12)
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+                # 4. Pair Plot for Feature Relationships
+                fig = sns.pairplot(df_features[feature_cols], height=2.5)
+                plt.suptitle("Pairwise Feature Relationships", size=16, y=1.02)
+                st.pyplot(fig)
+
+                # 5. Histogram for Hydrophobicity
+                fig = px.histogram(df_features, x="hydrophobicity", nbins=30, title="Hydrophobicity Distribution")
+                fig.update_layout(xaxis_title="Hydrophobicity", yaxis_title="Frequency")
+                st.plotly_chart(fig, use_container_width=True)
+
+                # 6. Feature Importance Plot
+                feature_importance = model.feature_importances_
+                importance_df = pd.DataFrame({
+                    'Feature': feature_cols,
+                    'Importance': feature_importance
+                }).sort_values(by='Importance', ascending=False)
+
+                fig = px.bar(importance_df, x="Feature", y="Importance", 
+                             title="Feature Importance", 
+                             labels={'Importance': 'Importance Score', 'Feature': 'Features'},
+                             color='Importance', color_continuous_scale='Viridis')
+                st.plotly_chart(fig, use_container_width=True)
+
+                # 7. Scatter Plot: Peptide Length vs Immunogenicity
+                fig = px.scatter(df_features, x="peptide_length", y="immunogenicity_score", 
+                                 title="Peptide Length vs Immunogenicity Score", 
+                                 color="immunogenicity_score", color_continuous_scale='Viridis')
+                fig.update_layout(
+                    xaxis_title="Peptide Length", yaxis_title="Immunogenicity Score"
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
