@@ -225,8 +225,8 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # Visualizations for feature analysis # 
-# Ensure proper indentation for the try and except block
+                # Visualizations for feature analysis 
+
 try:
     # 1. Violin Plot for the Immunogenicity Score
     fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
@@ -244,9 +244,9 @@ try:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # 3. Pair Plot for Feature Correlations
+    # 3. Pair Plot for Feature Correlations (Using seaborn)
     fig = sns.pairplot(df_features[feature_cols])
-    st.pyplot(fig)  # Explicitly pass the figure object
+    st.pyplot(fig)  # Explicitly pass the figure object to st.pyplot
 
     # 4. Confusion Matrix Plot (if needed)
     cm = confusion_matrix(Y_test, Y_pred)
@@ -254,10 +254,7 @@ try:
     sns.heatmap(cm, annot=True, fmt='d', ax=ax)
     ax.set_xlabel("Predicted")
     ax.set_ylabel("True")
-    st.pyplot(fig)  # Explicitly pass the figure object
+    st.pyplot(fig)  # Explicitly pass the figure object to st.pyplot
 
 except Exception as e:
     st.error(f"Error in prediction or visualization: {str(e)}")
-
-
-
