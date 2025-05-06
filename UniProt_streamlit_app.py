@@ -89,12 +89,12 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
 # Step 5: To predict the epitope Fetch sequence or from UniProt_id from Uniprot for your protein of interest
 
 def fetch_sequence_from_uniprot(uniprot_id):
-    url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
+    url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.fasta"
     response = requests.get(url)
     if response.ok:
         lines = response.text.split("\n")
-        seq = "".join(lines[1:])
-        name = lines[0].split("|")[-1].strip()
+        seq = "".join(line.strip() for line in lines if not line.startswith(">"))
+        name = lines[0].split("|")[-1].strip() if lines and lines[0].startswith(">") else uniprot_id
         return seq, name
     return None, None
 
