@@ -229,19 +229,39 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # Feature distributions visualization
-                
-                st.subheader("Peptide Feature Distributions")
-                feature_cols_to_plot = [
-                    'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
-                    'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
-                    'parker', 'immunogenicity_score'
-                ]
+     # Feature distributions visualization
 
-                for col in feature_cols_to_plot:
-                    if col in df_features.columns:
-                        fig = px.histogram(df_features, x=col, nbins=20, title=f'Distribution of {col}')
-                        st.plotly_chart(fig, use_container_width=True)
+                st.subheader("Enhanced Peptide Feature Distributions")
+
+feature_cols_to_plot = [
+    'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
+    'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
+    'parker', 'immunogenicity_score'
+]
+
+for col in feature_cols_to_plot:
+    if col in df_features.columns:
+        fig = px.histogram(
+            df_features,
+            x=col,
+            nbins=20,
+            title=f'Distribution of {col}',
+            color_discrete_sequence=px.colors.qualitative.Set2  # colorful theme
+        )
+        fig.update_layout(
+            title_font=dict(size=18, family="Arial"),
+            xaxis_title=col,
+            yaxis_title="Frequency",
+            template="plotly_white",
+            bargap=0.15
+        )
+        fig.update_traces(
+            hovertemplate=f"<b>{col}</b>: %{{x}}<br>Count: %{{y}}",
+            marker=dict(line=dict(width=1, color='DarkSlateGrey'))
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+                
 
                 # Positive predictions stats
                 
