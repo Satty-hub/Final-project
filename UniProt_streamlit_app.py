@@ -1,4 +1,4 @@
-# This Python (Pandas) code can be used to predict the Tcell and B cell epitope using UniProt ID or Protein sequence
+# This Python (Pandas) code can be used to predict the T-cell and B-cell epitope using UniProt ID or Protein sequence
 
 # Import all required libraries
 import streamlit as st
@@ -86,6 +86,7 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     return pd.DataFrame(rows)
 
 # Step 5: To predict the epitope Fetch sequence or from UniProt_id from Uniprot for your protein of interest
+
 def fetch_sequence_from_uniprot(uniprot_id):
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
@@ -97,6 +98,7 @@ def fetch_sequence_from_uniprot(uniprot_id):
     return None, None
 
 # Load the datasets in the Streamlit
+
 st.set_page_config(layout="wide")
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "T cell epitope predictor", "B cell epitope predictor"])
@@ -139,7 +141,7 @@ elif page == "Model Training":
     if st.checkbox("Apply SMOTE for balancing"):
         smote = SMOTE()
         X, Y = smote.fit_resample(X, Y)
-        st.success(" SMOTE applied")
+        st.success("SMOTE applied")
 
     scaler = MinMaxScaler()
     X = scaler.fit_transform(X)
@@ -154,7 +156,7 @@ elif page == "Model Training":
         model.fit(X_train, Y_train)
         Y_pred = model.predict(X_test)
 
-        st.success(" Model trained successfully!")
+        st.success("Model trained successfully!")
         st.write("Accuracy:", accuracy_score(Y_test, Y_pred))
         st.text("Classification Report:")
         st.text(classification_report(Y_test, Y_pred))
@@ -189,7 +191,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
     if st.button("Generate Epitopes and Predict"):
-        if sequence.strip() != "":
+        if sequence.strip() != "":  # Ensure sequence is not empty
             df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
             df_features = add_features(df)
 
@@ -212,66 +214,20 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 st.success(f"Predicted {len(df_features)} peptides.")
                 st.dataframe(df_features)
 
-                # Feature Visualization
-                st.subheader("Select Plot Type for Feature Visualization")
-                selected_feature = st.selectbox("Select feature to plot", feature_cols)
-                plot_type = st.selectbox("Select plot type", ["Histogram", "Boxplot", "Bar Chart", "Scatterplot"])
+                # **Visualizations for feature analysis**
 
-                fig, ax = plt.subplots()
-
-                # Create plot based on selected type
-                if plot_type == "Histogram":
-                    sns.histplot(df_features[selected_feature], kde=True, ax=ax)
-                    ax.set_title(f"{selected_feature} Distribution (Histogram)")
-                elif plot_type == "Boxplot":
-                    sns.boxplot(x=df_features[selected_feature], ax=ax)
-                    ax.set_title(f"{selected_feature} Distribution (Boxplot)")
-                elif plot_type == "Bar Chart":
-                    count_data = df_features[selected_feature].value_counts()
-                    count_data.plot(kind='bar', ax=ax)
-                    ax.set_title(f"{selected_feature} Distribution (Bar Chart)")
-                elif plot_type == "Scatterplot":
-                    if "peptide_length" in df_features.columns:
-                        sns.scatterplot(x="peptide_length", y=selected_feature, data=df_features, ax=ax)
-                        ax.set_title(f"Peptide Length vs {selected_feature} (Scatterplot)")
-                    else:
-                        st.warning("Scatter plot requires peptide_length feature!")
-
-                st.pyplot(fig)
-
-                # Visualizations for other feature analysis
-                st.subheader("Prediction Counts")
-                fig2 = px.histogram(df_features, x="prediction", title="Epitope Prediction Distribution")
-                st.plotly_chart(fig2)
-
-                st.subheader("Peptide Length vs Immunogenicity Score")
-                fig3 = px.scatter(df_features, x="peptide_length", y="immunogenicity_score", color="prediction",
-                                  title="Length vs Immunogenicity Score")
-                st.plotly_chart(fig3)
-
-                st.subheader("Feature Correlation Heatmap")
-                corr = df_features[feature_cols].corr()
-                fig4, ax4 = plt.subplots(figsize=(10, 6))
-                sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax4)
-                st.pyplot(fig4)
-
-                # Epitope Length Histogram
-                st.subheader(f"{model_type} Epitope Length Distribution")
-                positive_preds = df_features[df_features['prediction'] == 1]
-                fig5 = px.histogram(positive_preds, x='peptide_length', nbins=20,
-                                    title=f'{model_type} Epitope Length Distribution', 
-                                    color_discrete_sequence=["#66C2A5"])
-                fig5.update_layout(
-                    xaxis_title="Epitope Length",
-                    yaxis_title="Count",
-                    bargap=0.15,
-                    font=dict(size=12)
+                # 1. Violin Plot for the Immunogenicity Score
+                fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
+                                title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
+                fig.update_layout(
+                    yaxis_title="Immunogenicity Score", xaxis_title="Distribution", font=dict(size=12)
                 )
-                st.plotly_chart(fig5)
+                st.plotly_chart(fig, use_container_width=True)
 
-                # Allow file download for the predicted epitopes
-                csv = df_features.to_csv(index=False)
-                st.download_button("Download Predicted CSV", data=csv, file_name="predicted_epitopes.csv")
-
-            except Exception as e:
-                st.error(f"Prediction failed: {e}")
+                # 2. Box Plot for Hydrophobicity
+                fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
+                             color_discrete_sequence=["#66C2A5"])
+                fig.update_layout(
+                    yaxis_title="Hydrophobicity", font=dict(size=12)
+                )
+                st.plot
