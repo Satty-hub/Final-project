@@ -231,55 +231,55 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
 
      # Feature distributions visualization
 
-                st.subheader("Enhanced Peptide Feature Distributions")
+    # Feature distributions visualization
 
-feature_cols_to_plot = [
-    'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
-    'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
-    'parker', 'immunogenicity_score'
-]
+st.subheader("Enhanced Peptide Feature Distributions")
 
-for col in feature_cols_to_plot:
-    if col in df_features.columns:
-        fig = px.histogram(
-            df_features,
-            x=col,
-            nbins=20,
-            title=f'Distribution of {col}',
-            color_discrete_sequence=px.colors.qualitative.Set2  # colorful theme
-        )
-        fig.update_layout(
-            title_font=dict(size=18, family="Arial"),
-            xaxis_title=col,
-            yaxis_title="Frequency",
-            template="plotly_white",
-            bargap=0.15
-        )
-        fig.update_traces(
-            hovertemplate=f"<b>{col}</b>: %{{x}}<br>Count: %{{y}}",
-            marker=dict(line=dict(width=1, color='DarkSlateGrey'))
-        )
-        st.plotly_chart(fig, use_container_width=True)
+try:
+    feature_cols_to_plot = [
+        'peptide_length', 'hydrophobicity', 'isoelectric_point', 'stability',
+        'aromaticity', 'emini', 'kolaskar_tongaonkar', 'chou_fasman',
+        'parker', 'immunogenicity_score'
+    ]
 
-                
+    for col in feature_cols_to_plot:
+        if col in df_features.columns:
+            fig = px.histogram(
+                df_features,
+                x=col,
+                nbins=20,
+                title=f'Distribution of {col}',
+                color_discrete_sequence=px.colors.qualitative.Set2  # colorful theme
+            )
+            fig.update_layout(
+                title_font=dict(size=18, family="Arial"),
+                xaxis_title=col,
+                yaxis_title="Frequency",
+                template="plotly_white",
+                bargap=0.15
+            )
+            fig.update_traces(
+                hovertemplate=f"<b>{col}</b>: %{{x}}<br>Count: %{{y}}",
+                marker=dict(line=dict(width=1, color='DarkSlateGrey'))
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
-                # Positive predictions stats
-                
-                positive_preds = df_features[df_features['prediction'] == 1]
-                st.subheader(f"{model_type} Epitope Summary")
-                st.metric("Number of Predicted Epitopes", len(positive_preds))
-                st.metric("Average Epitope Length", f"{positive_preds['peptide_length'].mean():.2f}")
-                st.metric("Total Epitope Length", f"{positive_preds['peptide_length'].sum():.2f}")
+    # Positive predictions stats
+    positive_preds = df_features[df_features['prediction'] == 1]
+    st.subheader(f"{model_type} Epitope Summary")
+    st.metric("Number of Predicted Epitopes", len(positive_preds))
+    st.metric("Average Epitope Length", f"{positive_preds['peptide_length'].mean():.2f}")
+    st.metric("Total Epitope Length", f"{positive_preds['peptide_length'].sum():.2f}")
 
-                # Epitope length histogram
-                
-                st.plotly_chart(px.histogram(positive_preds, x='peptide_length', nbins=10,
-                                             title=f'{model_type} Epitope Length Distribution'))
+    # Epitope length histogram
+    st.plotly_chart(px.histogram(positive_preds, x='peptide_length', nbins=10,
+                                 title=f'{model_type} Epitope Length Distribution'))
 
-                # Allow file download for the predicted epitopes
-                
-                csv = df_features.to_csv(index=False)
-                st.download_button("Download Predicted CSV", data=csv, file_name="predicted_epitopes.csv")
+    # Allow file download for the predicted epitopes
+    csv = df_features.to_csv(index=False)
+    st.download_button("Download Predicted CSV", data=csv, file_name="predicted_epitopes.csv")
 
-            except Exception as e:
-                st.error(f"Prediction failed: {e}")
+except Exception as e:
+    st.error(f"Prediction failed: {e}")
+
+               
