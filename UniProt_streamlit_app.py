@@ -203,7 +203,11 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
             ]
 
             try:
-                model = joblib.load(f"{model_type.lower()}-rf_model.pkl")
+                model_file = f"{model_type.lower()}-rf_model.pkl"
+                if not os.path.exists(model_file):
+                    st.error(f"Model file '{model_file}' not found. Please train the model first.")
+                    return
+                model = joblib.load(model_file)
                 scaler = joblib.load(f"{model_type.lower()}-scaler.pkl")
 
                 X_pred = df_features[feature_cols]
@@ -218,6 +222,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 # **Visualizations for feature analysis**
 
                 # 1. Violin Plot for the Immunogenicity Score
+                
                 fig = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
                                 title="Immunogenicity Score Distribution", color_discrete_sequence=["#FF6F61"])
                 fig.update_layout(
@@ -226,6 +231,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 st.plotly_chart(fig, use_container_width=True)
 
                 # 2. Box Plot for Hydrophobicity
+                
                 fig = px.box(df_features, y="hydrophobicity", title="Hydrophobicity Distribution",
                              color_discrete_sequence=["#66C2A5"])
                 fig.update_layout(
@@ -234,6 +240,7 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                 st.plotly_chart(fig, use_container_width=True)
 
                 # 3. Pair Plot for Feature Correlations
+                
                 sns.pairplot(df_features[feature_cols])
                 st.pyplot()
 
