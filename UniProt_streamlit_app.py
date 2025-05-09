@@ -19,12 +19,21 @@ import joblib
 import os
 
 # Set page config at the very top
-
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-# Add custom CSS background and style
-# Inject custom CSS for background and styling
+# Sidebar with image of the human immune system
+with st.sidebar:
+    st.image("human_immune_system.png", caption="Human Immune System", use_column_width=True)  # Replace with your image path
+    st.markdown("<br>", unsafe_allow_html=True)  # Adding some space for styling
+    st.markdown("""
+        <style>
+            .stSidebar {
+                background-color: rgba(0, 0, 0, 0.1);  /* Adding light background for contrast */
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
+# Add custom CSS background and style
 st.markdown("""
     <style>
         .stApp {
@@ -100,6 +109,7 @@ def load_data():
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
 # Step 2: Feature Engineering
+
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -108,6 +118,7 @@ def add_features(df):
     return df
 
 # Step 3: Generate peptides from sequence
+
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
@@ -116,6 +127,7 @@ def generate_peptides(sequence, min_length=8, max_length=11):
     return peptides
 
 # Step 4: Simulate peptide feature data
+
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
@@ -149,26 +161,11 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
 
     return pd.DataFrame(rows)
 
-# Step 5: To predict the epitope Fetch sequence or from UniProt_id from Uniprot for your protein of interest
-def fetch_sequence_from_uniprot(uniprot_id):
-    url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
-    response = requests.get(url)
-    if response.ok:
-        lines = response.text.split("\n")
-        seq = "".join(lines[1:])
-        name = lines[0].split("|")[-1].strip()
-        return seq, name
-    return None, None
-
-@st.cache_data
-def convert_df_to_csv(df):
-    return df.to_csv(index=False).encode("utf-8")
-
 # Streamlit Layout and Navigation
+
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Model Training", "T cell epitope predictor", "B cell epitope predictor", "Data Overview"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
-
 
 #  Data overview to see the input and output
 
@@ -182,6 +179,7 @@ if page == "Data Overview":
     st.dataframe(df_sars.head())
     st.subheader("COVID Test Dataset")
     st.dataframe(df_test.head())
+
 
 # Train th emodel whenever required to bwt better performance and accuracy
 
@@ -202,10 +200,12 @@ elif page == "Model Training":
     ]
 
     # Drop unwanted columns if they exist
+    
     cols_to_drop = ["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"]
     df = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
 
     # Check for target column
+    
     if "target" not in df.columns:
         st.error("The dataset does not contain the 'target' column required for training.")
         st.stop()
@@ -213,6 +213,7 @@ elif page == "Model Training":
     df = df.dropna(subset=['target'])
 
     # Get only available feature columns
+    
     available_features = [col for col in FEATURE_COLUMNS if col in df.columns]
     if not available_features:
         st.error("None of the required feature columns are present in the data.")
@@ -263,8 +264,6 @@ elif page == "Model Training":
 
 #  Define the function for Epitope prediction and visualization with plot and CSV file
 
-# ... [Keep everything above this line unchanged] ...
-
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Predictor")
 
@@ -281,20 +280,24 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     protein_name = "Unknown"
 
     # Try fetching sequence if UniProt ID is provided
+    
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
         if not sequence:
             st.warning("Could not fetch sequence from UniProt. Please paste sequence manually below.")
 
     # If sequence is still not available, use manual entry
+    
     if not sequence:
         sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
         protein_name = st.text_input("Protein Name", "Manual_Protein")
 
     # Choose prediction type from context
+    
     model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
     # Prediction block
+    
     if sequence.strip() != "":
         if st.button("Generate Epitopes and Predict"):
             try:
@@ -325,7 +328,8 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
                     st.success(f"Predicted {len(df_features)} peptides.")
                     st.dataframe(df_features)
 
-                    # --- Visualizations ---
+                    # Visualize all the feature by graph and plot
+                    
                     st.subheader("Immunogenicity Score Distribution")
                     fig1 = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
                                      title="Immunogenicity Score", color_discrete_sequence=["#FF6F61"])
