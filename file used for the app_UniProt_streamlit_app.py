@@ -21,20 +21,72 @@ import os
 
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
+# Sidebar with image of the human immune system
+with st.sidebar:
+    st.image("https://via.placeholder.com/150", caption="Placeholder Image", use_container_width=True)  
+    st.markdown("<br>", unsafe_allow_html=True)  # Adding some space for styling
+    st.markdown("""
+        <style>
+            .stSidebar {
+                background-color: rgba(0, 0, 0, 0.1);  /* Adding light background for contrast */
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+# Add custom CSS background and style
 st.markdown("""
     <style>
-    .stApp {
-        background-image: url("https://www.cdc.gov/coronavirus/2019-ncov/images/outbreak-coronavirus-world.png");
-        background-size: cover;
-        background-attachment: fixed;
-        background-repeat: no-repeat;
-        background-position: center;
-    }
-    .block-container {
-        background-color: rgba(255,255,255,0.85);
-        padding: 2rem;
-        border-radius: 1rem;
-    }
+        .stApp {
+            background-image: 
+                url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
+                url("https://images.unsplash.com/photo-1501605144124-f7f1cf515d16?auto=format&fit=crop&w=500&h=500&dpr=2");
+            background-size: cover, contain;
+            background-attachment: fixed;
+            background-repeat: no-repeat, no-repeat;
+            background-position: center, bottom right;
+        }
+
+        /* Stylish navigation at top-left */
+        .stRadio {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            transition: background-color 0.3s ease;
+        }
+
+        .stRadio label {
+            font-size: 18px;
+            color: #1e3d59;
+        }
+
+        .stRadio div.stRadioItem {
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        .stRadio div.stRadioItem:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+            cursor: pointer;
+        }
+
+        /* Block container styling */
+        .block-container {
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-top: 2rem;
+        }
+
+        h1, h2, h3 {
+            color: #1e3d59;
+        }
     </style>
 """, unsafe_allow_html=True)
 
