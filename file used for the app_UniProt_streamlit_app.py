@@ -201,7 +201,7 @@ elif page == "Model Training":
     FEATURE_COLUMNS = [
         'protein_seq_length', 'parent_protein_id_length', 'peptide_length',
         'chou_fasman', 'emini', 'kolaskar_tongaonkar', 'parker',
-        'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability', 'immunogenicity'
+        'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability', 'immunogenicity_score'
     ]
 
     df = df.dropna(subset=['target'])
@@ -274,7 +274,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         feature_cols = [
             'protein_seq_length', 'parent_protein_id_length', 'peptide_length',
             'chou_fasman', 'emini', 'kolaskar_tongaonkar', 'parker',
-            'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability', 'immunogenicity'
+            'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability', 'immunogenicity_score'
         ]
 
         if not all(col in df.columns for col in feature_cols):
