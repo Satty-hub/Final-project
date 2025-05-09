@@ -18,7 +18,6 @@ import joblib
 import os
 
 # Background and navigator Config and Custom Styling 
-
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Sidebar with image of the human immune system
@@ -157,9 +156,13 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
                 "immunogenicity_score": round(random.uniform(0.0, 1.0), 3)
             }
             rows.append(row)
-        except:
+        except Exception as e:
+            st.error(f"Error generating peptide: {e}")
             continue
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    if 'immunogenicity_score' not in df.columns:
+        st.error("immunogenicity_score column is missing in peptide data!")
+    return df
 
 # ---------- Step 5: Streamlit Layout ----------
 
