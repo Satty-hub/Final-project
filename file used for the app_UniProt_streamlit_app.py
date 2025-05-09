@@ -242,7 +242,7 @@ elif page == "Model Training":
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
 
-# ---------- Step 8: Epitope Prediction (T/B Cell) ----------
+# Epitope Prediction (T/B Cell)
 elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     st.header("Epitope Prediction")
     model_type = "T-cell" if "T" in page else "B-cell"
@@ -255,7 +255,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
         if not sequence:
-            st.warning("Could not fetch sequence from UniProt. Please paste it manually below.")
+            st.warning("⚠️ Could not fetch sequence from UniProt. Please paste it manually below.")
     
     if st.button("Generate & Predict") and sequence.strip():
         df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
@@ -285,6 +285,23 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         df['prediction'] = model.predict(X_pred)
 
         st.dataframe(df)
+
+        # --- Immunogenicity Score Plot ---
+        st.subheader("Immunogenicity Score Distribution")
+        st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
+
+        # --- Pairwise Plot ---
+        st.subheader("Pairwise Plot of Features")
+        # Select features for the pairwise plot
+        pairwise_cols = [
+            'protein_seq_length', 'parent_protein_id_length', 'peptide_length',
+            'chou_fasman', 'emini', 'kolaskar_tongaonkar', 'parker',
+            'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability', 'immunogenicity_score'
+        ]
+        
+        # Create pairwise plot (using plotly for an interactive plot)
+        st.plotly_chart(px.scatter_matrix(df, dimensions=pairwise_cols, color="prediction",
+                                          title="Pairwise Plot of Peptide Features"))
 
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
