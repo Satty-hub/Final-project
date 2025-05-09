@@ -90,10 +90,26 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Step 1: Upload the dataset, since data is in download I use the link fro dowload
+# --- Function to fetch protein sequence from UniProt ---
+def fetch_sequence_from_uniprot(uniprot_id):
+    try:
+        url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.fasta"
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            return "", ""
+
+        lines = response.text.splitlines()
+        protein_name = lines[0].split("|")[-1].strip() if lines else "Unknown"
+        sequence = ''.join(lines[1:])  # Join all sequence lines
+
+        return sequence, protein_name
+    except Exception as e:
+        return "", ""
+
+# Step 1: Upload the dataset, since data is in download I use the link for download
 
 @st.cache_data
-
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
     covid_url = "https://drive.google.com/uc?id=13JRk-wG8GggBTA-3J1U4R5x3nhrT7KbY&export=download"
@@ -111,7 +127,6 @@ def load_data():
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
 # ---------- Step 2: Feature Engineering ----------
-
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -120,7 +135,6 @@ def add_features(df):
     return df
 
 # ---------- Step 3: Peptide Generation ----------
-
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
@@ -129,7 +143,6 @@ def generate_peptides(sequence, min_length=8, max_length=11):
     return peptides
 
 # ---------- Step 4: Simulate Peptide Feature Data ----------
-
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
@@ -162,7 +175,6 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     return pd.DataFrame(rows)
 
 # ---------- Step 5: Streamlit Layout ----------
-
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Model Training", "T cell epitope predictor", "B cell epitope predictor", "Data Overview"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
@@ -240,6 +252,11 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     sequence = st.text_area("Paste Protein Sequence:", height=200)
     protein_name = st.text_input("Protein Name", "Manual_Protein")
 
+    if uniprot_id:
+        sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
+        if not sequence:
+            st.warning("⚠️ Could not fetch sequence from UniProt. Please paste it manually below.")
+    
     if st.button("Generate & Predict") and sequence.strip():
         df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
         df = add_features(df)
