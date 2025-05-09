@@ -22,21 +22,25 @@ import os
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Add custom CSS background and style
+# Inject custom CSS for background and styling
 st.markdown("""
     <style>
-    .main {
-        background-image: url('https://images.unsplash.com/photo-1588776814546-ec7e4b20d1cc');
-        background-size: cover;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        color: white;
-    }
-    .stApp {
-        background-color: rgba(0, 0, 0, 0.7);
-    }
-    h1, h2, h3, h4, h5, h6 {
-        color: #ffffff;
-    }
+        .stApp {
+            background-image: url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80");
+            background-size: cover;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .block-container {
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-top: 2rem;
+        }
+        h1, h2, h3 {
+            color: #1e3d59;
+        }
     </style>
 """, unsafe_allow_html=True)
 
