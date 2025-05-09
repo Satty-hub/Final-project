@@ -289,8 +289,8 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
 
-        st.subheader("immunogenicity Distribution")
-        st.plotly_chart(px.box(df, y="stability"))
+        st.subheader("immunogenicity score Distribution")
+        st.plotly_chart(px.box(df, y="immunogenicity_score"))
 
         st.subheader("Peptide Length Distribution")
         st.plotly_chart(px.histogram(df, x="peptide_length"))
