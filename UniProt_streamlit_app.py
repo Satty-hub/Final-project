@@ -238,33 +238,40 @@ elif page == "Model Training":
 
 #  Define the function for Epitope prediction and visualization with plot and CSV file
 
+# ... [Keep everything above this line unchanged] ...
+
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Predictor")
-    
+
     organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"])
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
+
     st.text(f"You selected: {organism}")
 
-    # Define the default protein sequence
-default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
+    # Define default sequence
+    default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
 
-# Initialize sequence
-sequence = None
+    # Initialize sequence and protein name
+    sequence = ""
+    protein_name = "Unknown"
 
-# If UniProt ID is provided, fetch the sequence
-if uniprot_id:
-    sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
+    # Try fetching sequence if UniProt ID is provided
+    if uniprot_id:
+        sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
+        if not sequence:
+            st.warning("Could not fetch sequence from UniProt. Please paste sequence manually below.")
 
-# If no sequence is provided via UniProt ID, use the default sequence or ask user input
-if not sequence:
-    sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
-    protein_name = st.text_input("Protein Name", "Manual_Protein")
+    # If sequence is still not available, use manual entry
+    if not sequence:
+        sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
+        protein_name = st.text_input("Protein Name", "Manual_Protein")
 
-    
+    # Choose prediction type from context
     model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
-    if st.button("Generate Epitopes and Predict"):
-        if sequence.strip() != "":
+    # Prediction block
+    if sequence.strip() != "":
+        if st.button("Generate Epitopes and Predict"):
             try:
                 df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
                 df_features = add_features(df)
@@ -293,42 +300,30 @@ if not sequence:
                     st.success(f"Predicted {len(df_features)} peptides.")
                     st.dataframe(df_features)
 
-                    # Visualizations of the features to get good idea how good the peptides are
-
-                    # Violin Plot
+                    # --- Visualizations ---
                     st.subheader("Immunogenicity Score Distribution")
                     fig1 = px.violin(df_features, y="immunogenicity_score", box=True, points="all", 
                                      title="Immunogenicity Score", color_discrete_sequence=["#FF6F61"])
                     st.plotly_chart(fig1, use_container_width=True)
 
-                    # Box Plot
                     st.subheader("Hydrophobicity Distribution")
                     fig2 = px.box(df_features, y="hydrophobicity", title="Hydrophobicity", 
                                   color_discrete_sequence=["#66C2A5"])
                     st.plotly_chart(fig2, use_container_width=True)
 
-                    # Correlation Heatmap
                     st.subheader("Feature Correlation Heatmap")
                     corr = df_features[feature_cols].corr()
                     fig3, ax = plt.subplots(figsize=(10, 6))
                     sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f", ax=ax)
                     st.pyplot(fig3)
 
-                    # Pairplot
                     st.subheader("Pairwise Feature Relationships")
                     import warnings
                     warnings.filterwarnings("ignore")
                     fig4 = sns.pairplot(df_features[feature_cols + ['prediction']], hue='prediction', palette='husl')
                     st.pyplot(fig4)
 
-                    #  Download the predicted epitope as csv file
-
                     st.subheader("Download Predictions as CSV")
-
-                    @st.cache_data
-                    def convert_df_to_csv(df):
-                        return df.to_csv(index=False).encode("utf-8")
-
                     csv = convert_df_to_csv(df_features)
                     st.download_button(
                         label="Download Epitope Predictions",
@@ -339,3 +334,4 @@ if not sequence:
 
             except Exception as e:
                 st.error(f"Error in prediction or visualization: {str(e)}")
+
