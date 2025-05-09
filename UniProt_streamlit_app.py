@@ -215,8 +215,8 @@ elif page == "Model Training":
         ]
 
 
-    df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
-    df = df.dropna(subset=['target'])
+    cols_to_drop = ["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"]
+    df = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
 
 
     if st.checkbox("Apply SMOTE for balancing"):
