@@ -19,6 +19,35 @@ import random
 import joblib
 import os
 
+# Add the background and banner in the app
+
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+        background-size: cover;
+        background-color: #f7fdfc;
+    }
+    .css-1d391kg, .css-18e3th9 {
+        background-color: #f7fdfc;
+    }
+    .block-container {
+        padding-top: 2rem;
+    }
+    h1, h2, h3, h4 {
+        color: #004d66;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.image(
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/SARS-CoV-2_without_background.png/800px-SARS-CoV-2_without_background.png",
+    use_column_width=True,
+    caption="SARS-CoV-2 (Virus Structure)"
+
 # Step 1: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
 @st.cache_data
 def load_data():
@@ -111,16 +140,16 @@ df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
 # === DATA OVERVIEW ===
 if page == "Data Overview":
-    st.header("Data Overview")
-    st.subheader("B-cell Dataset")
+    st.header("📊 Data Overview")
+    st.subheader("🔹 B-cell Dataset")
     st.dataframe(df_bcell.head())
-    st.subheader("T-cell Dataset")
+    st.subheader("🔹 T-cell Dataset")
     st.dataframe(df_tcell.head())
-    st.subheader("SARS Dataset")
+    st.subheader("🔹 SARS Dataset")
     st.dataframe(df_sars.head())
-    st.subheader("COVID Test Dataset")
+    st.subheader("🔹 COVID Test Dataset")
     st.dataframe(df_test.head())
-    st.subheader("Processed Training Data")
+    st.subheader("🔹 Processed Training Data")
     if st.checkbox("Show B-cell Preprocessing"):
         st.dataframe(add_features(df_train_b).head())
     if st.checkbox("Show T-cell Preprocessing"):
