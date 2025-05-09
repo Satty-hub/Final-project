@@ -209,14 +209,30 @@ elif page == "Model Training":
         df = df.dropna(subset=['target'])
 
         FEATURE_COLUMNS = [
-            'protein_seq_length', 'parent_protein_id_length',
-            'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
-            'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
-        ]
+    'protein_seq_length', 'parent_protein_id_length',
+    'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
+    'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
+]
 
+# Safely drop columns if they exist
+cols_to_drop = ["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"]
+df = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
 
-    cols_to_drop = ["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"]
-    df = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
+# Ensure 'target' column exists
+if "target" not in df.columns:
+    st.error("The dataset does not contain the 'target' column required for training.")
+    st.stop()
+
+df = df.dropna(subset=['target'])
+
+# Safely extract only available feature columns
+available_features = [col for col in FEATURE_COLUMNS if col in df.columns]
+if not available_features:
+    st.error("None of the required feature columns are present in the data.")
+    st.stop()
+
+X = df[available_features]
+Y = df["target"]
 
 
     if st.checkbox("Apply SMOTE for balancing"):
