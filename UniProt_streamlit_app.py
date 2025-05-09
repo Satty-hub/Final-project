@@ -26,7 +26,8 @@ st.set_page_config(layout="wide", page_title="Epitope Predictor")
 st.markdown("""
     <style>
         .stApp {
-            background-image: url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80");
+            background-image: url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
+            url("https://images.unsplash.com/photo-1581090700227-1c893e8aa7b3");
             background-size: cover;
             background-attachment: fixed;
             background-repeat: no-repeat;
