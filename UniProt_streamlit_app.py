@@ -106,7 +106,7 @@ def convert_df_to_csv(df):
 # Streamlit Layout and Navigation
 st.set_page_config(layout="wide")
 st.title("B-cell and T-cell Epitope Predictor")
-page = st.sidebar.radio("Navigation", ["Data Overview", "Model Training", "T cell epitope predictor", "B cell epitope predictor"])
+page = st.sidebar.radio("Navigation", ["Model Training", "T cell epitope predictor", "B cell epitope predictor", "Data Overview"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
 # === DATA OVERVIEW ===
