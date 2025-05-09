@@ -1,5 +1,6 @@
- B-cell and T-cell Prediction tools for vaccine development
- This is an simple epitope or peptide prediction tool built on Streamlit, which can predicts B-cell and T-cell epitopes from any given protein sequences. It is very easy to use simple by uploading a sequence or protein of interest or using a UniProt ID to extract the sequence directly and uses these sequences to predict the epitopes by applying a trained machine learning model.
+ Epitope prediction tool (B cells and T cells).
+ This is an simple epitope or peptide prediction tool built on Streamlit, which can predicts B-cell and T-cell epitopes from any given protein sequences or UniProtId. It is very easy to use simple by uploading a protein sequence of your interest or 
+ using a UniProt ID to extract the sequence directly and uses these sequences to predict the epitopes by applying a trained machine learning model.
  Basic features of the tool: 
  B-cell and T-cell Epitope Prediction: Users can choose between B-cell and T-cell epitope prediction.
 
