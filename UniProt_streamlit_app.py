@@ -195,11 +195,25 @@ elif page == "Model Training":
     else:
         df = df_train_t.copy()
 
-    FEATURE_COLUMNS = [
-        'protein_seq_length', 'parent_protein_id_length',
-        'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
-        'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
-    ]
+    # Add features BEFORE referencing feature columns
+    df = add_features(df)
+
+    # Drop non-feature columns safely
+    cols_to_drop = ["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"]
+    df = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
+
+    # Drop rows with missing targets
+    if 'target' not in df.columns:
+        st.error("Target column is missing from dataset.")
+    else:
+        df = df.dropna(subset=['target'])
+
+        FEATURE_COLUMNS = [
+            'protein_seq_length', 'parent_protein_id_length',
+            'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
+            'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
+        ]
+
 
     df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
     df = df.dropna(subset=['target'])
