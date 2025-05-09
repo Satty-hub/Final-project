@@ -46,7 +46,7 @@ st.markdown(
 st.image(
     "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/SARS-CoV-2_without_background.png/800px-SARS-CoV-2_without_background.png",
     use_column_width=True,
-    caption="SARS-CoV-2 (Virus Structure)"
+    caption="SARS-CoV-2 (Virus Structure)")
 
 # Step 1: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
 @st.cache_data
