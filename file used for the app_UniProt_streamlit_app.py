@@ -281,20 +281,24 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
 
     # Try fetching sequence if UniProt ID is provided
     
-    if uniprot_id:
+    sequence = ""
+protein_name = ""
+
+# Try fetching sequence if UniProt ID is provided
+if uniprot_id:
+    try:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
-        if not sequence:
-            st.warning("Could not fetch sequence from UniProt. Please paste sequence manually below.")
+    except Exception as e:
+        st.warning(f"Could not fetch sequence from UniProt. Error: {str(e)}")
 
-    # If sequence is still not available, use manual entry
-    
-    if not sequence:
-        sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
-        protein_name = st.text_input("Protein Name", "Manual_Protein")
+# If sequence is still not available, use manual entry
+if not sequence:
+    sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
+    protein_name = st.text_input("Protein Name", "Manual_Protein")
 
-    # Choose prediction type from context
-    
-    model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
+# Choose prediction type from context
+model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
+
 
     # Prediction block
     
