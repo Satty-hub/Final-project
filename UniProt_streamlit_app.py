@@ -23,7 +23,7 @@ st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Sidebar with image of the human immune system
 with st.sidebar:
-    st.image("https://via.placeholder.com/150", caption="Placeholder Image", use_container_width=True)  
+    st.image("https://i0.wp.com/immunodeficiency.ca/wp-content/uploads/2012/05/Immune-System-Diagram-en.jpg?ssl=1", caption="Human Immune System Diagram", use_container_width=True)  
     st.markdown("<br>", unsafe_allow_html=True)  # Adding some space for styling
     st.markdown("""
         <style>
