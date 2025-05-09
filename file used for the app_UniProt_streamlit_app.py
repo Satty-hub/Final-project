@@ -296,7 +296,7 @@ if uniprot_id:
         st.warning("Could not fetch sequence from UniProt. Please paste sequence manually below.")
 
 if not sequence:
-    sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
+    sequence = st.text_area("Paste Protein Sequence:", value= default_seq, height=200)
     protein_name = st.text_input("Protein Name", "Manual_Protein")
 
 # Now insert your block here safely
