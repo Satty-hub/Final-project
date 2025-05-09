@@ -241,11 +241,9 @@ elif page == "Model Training":
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     st.header("Epitope Predictor")
     
-    st.text(organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"])
+    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"])
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
-    default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
-    sequence = None
-    protein_name = "Unknown")
+    st.text(f"You selected: {organism}")
 
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
