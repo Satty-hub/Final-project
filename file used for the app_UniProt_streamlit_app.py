@@ -276,13 +276,6 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         # Display results
         st.dataframe(df)
 
-        # Plot Immunogenicity Distribution if present
-        if 'immunogenicity_score' in df.columns:
-            st.subheader("Immunogenicity Distribution")
-            st.plotly_chart(px.box(df, y="immunogenicity_score"))
-        else:
-            st.error("Immunogenicity score column is missing.")
-
         # Additional plots
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
