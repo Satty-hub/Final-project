@@ -195,49 +195,41 @@ elif page == "Model Training":
     else:
         df = df_train_t.copy()
 
-    # Add features BEFORE referencing feature columns
-    df = add_features(df)
+    FEATURE_COLUMNS = [
+        'protein_seq_length', 'parent_protein_id_length',
+        'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
+        'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
+    ]
 
-    # Drop non-feature columns safely
+    # Drop unwanted columns if they exist
     cols_to_drop = ["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"]
     df = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
 
-    # Drop rows with missing targets
-    if 'target' not in df.columns:
-        st.error("Target column is missing from dataset.")
-    else:
-        df = df.dropna(subset=['target'])
+    # Check for target column
+    if "target" not in df.columns:
+        st.error("The dataset does not contain the 'target' column required for training.")
+        st.stop()
 
-        FEATURE_COLUMNS = [
-    'protein_seq_length', 'parent_protein_id_length',
-    'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
-    'parker', 'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
-]
+    df = df.dropna(subset=['target'])
 
-# Safely drop columns if they exist
-cols_to_drop = ["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"]
-df = df.drop(columns=[col for col in cols_to_drop if col in df.columns])
+    # Get only available feature columns
+    available_features = [col for col in FEATURE_COLUMNS if col in df.columns]
+    if not available_features:
+        st.error("None of the required feature columns are present in the data.")
+        st.stop()
 
-# Ensure 'target' column exists
-if "target" not in df.columns:
-    st.error("The dataset does not contain the 'target' column required for training.")
-    st.stop()
+    X = df[available_features]
+    Y = df["target"]
 
-df = df.dropna(subset=['target'])
-
-# Safely extract only available feature columns
-available_features = [col for col in FEATURE_COLUMNS if col in df.columns]
-if not available_features:
-    st.error("None of the required feature columns are present in the data.")
-    st.stop()
-
-X = df[available_features]
-Y = df["target"]
-
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
 
     if st.checkbox("Apply SMOTE for balancing"):
+        from imblearn.over_sampling import SMOTE
         smote = SMOTE()
         X, Y = smote.fit_resample(X, Y)
+
         st.success("SMOTE applied")
 
     scaler = MinMaxScaler()
