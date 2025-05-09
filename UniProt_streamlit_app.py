@@ -190,6 +190,11 @@ elif page == "Model Training":
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
     st.text(f"You selected: {choice}")
 
+    if choice == "B-cell":
+        df = df_train_b.copy()
+    else:
+        df = df_train_t.copy()
+
     FEATURE_COLUMNS = [
         'protein_seq_length', 'parent_protein_id_length',
         'peptide_length', 'chou_fasman', 'emini', 'kolaskar_tongaonkar',
@@ -199,8 +204,6 @@ elif page == "Model Training":
     df = df.drop(["parent_protein_id", "protein_seq", "peptide_seq", "start_position", "end_position"], axis=1)
     df = df.dropna(subset=['target'])
 
-    X = df[FEATURE_COLUMNS]
-    Y = df["target"]
 
     if st.checkbox("Apply SMOTE for balancing"):
         smote = SMOTE()
