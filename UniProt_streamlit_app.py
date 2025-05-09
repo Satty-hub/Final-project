@@ -187,9 +187,8 @@ if page == "Data Overview":
 
 elif page == "Model Training":
     st.header("Model Training")
-    st.text(choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
-    df = df_train_b if choice == "B-cell" else df_train_t
-    df = add_features(df))
+    choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
+    st.text(f"You selected: {choice}")
 
     FEATURE_COLUMNS = [
         'protein_seq_length', 'parent_protein_id_length',
