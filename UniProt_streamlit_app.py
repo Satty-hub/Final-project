@@ -19,26 +19,62 @@ import joblib
 import os
 
 # Set page config at the very top
+
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Add custom CSS background and style
 # Inject custom CSS for background and styling
+
 st.markdown("""
     <style>
         .stApp {
-            background-image: url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
-                              url("https://images.unsplash.com/photo-1501605144124-f7f1cf515d16?auto=format&fit=crop&w=500&h=500&dpr=2");
-            background-size: cover;
+            background-image: 
+                url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
+                url("https://images.unsplash.com/photo-1501605144124-f7f1cf515d16?auto=format&fit=crop&w=500&h=500&dpr=2");
+            background-size: cover, contain;
             background-attachment: fixed;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-repeat: no-repeat, no-repeat;
+            background-position: center, bottom right;
         }
+
+        /* Stylish navigation at top-left */
+        .stRadio {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            transition: background-color 0.3s ease;
+        }
+
+        .stRadio label {
+            font-size: 18px;
+            color: #1e3d59;
+        }
+
+        .stRadio div.stRadioItem {
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        .stRadio div.stRadioItem:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+            cursor: pointer;
+        }
+
+        /* Block container styling */
         .block-container {
             background-color: rgba(255, 255, 255, 0.85);
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
         }
+
         h1, h2, h3 {
             color: #1e3d59;
         }
@@ -137,28 +173,23 @@ df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 #  Data overview to see the input and output
 
 if page == "Data Overview":
-    st.header("📊 Data Overview")
-    st.subheader("🔹 B-cell Dataset")
+    st.header("Data Overview")
+    st.subheader("B-cell Dataset")
     st.dataframe(df_bcell.head())
-    st.subheader("🔹 T-cell Dataset")
+    st.subheader("T-cell Dataset")
     st.dataframe(df_tcell.head())
-    st.subheader("🔹 SARS Dataset")
+    st.subheader("SARS Dataset")
     st.dataframe(df_sars.head())
-    st.subheader("🔹 COVID Test Dataset")
+    st.subheader("COVID Test Dataset")
     st.dataframe(df_test.head())
-    st.subheader("🔹 Processed Training Data")
-    if st.checkbox("Show B-cell Preprocessing"):
-        st.dataframe(add_features(df_train_b).head())
-    if st.checkbox("Show T-cell Preprocessing"):
-        st.dataframe(add_features(df_train_t).head())
 
 # Train th emodel whenever required to bwt better performance and accuracy
 
 elif page == "Model Training":
     st.header("Model Training")
-    choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
+    st.text(choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
     df = df_train_b if choice == "B-cell" else df_train_t
-    df = add_features(df)
+    df = add_features(df))
 
     FEATURE_COLUMNS = [
         'protein_seq_length', 'parent_protein_id_length',
@@ -209,13 +240,13 @@ elif page == "Model Training":
 #  Define the function for Epitope prediction and visualization with plot and CSV file
 
 elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
-    st.header("Epitope Prediction with Model")
+    st.header("Epitope Predictor")
     
-    organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"])
+    st.text(organism = st.selectbox("Select Organism", ["Human", "Bacteria", "Virus", "Fungi", "Mice", "Other"])
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
     default_seq = "MFVFLVLLPLVSSQCVNLTTRTQLPPAYTNSFTRGVYYPDKVFRSSVL..."
     sequence = None
-    protein_name = "Unknown"
+    protein_name = "Unknown")
 
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
