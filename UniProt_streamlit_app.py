@@ -245,12 +245,16 @@ elif page == "T cell epitope predictor" or page == "B cell epitope predictor":
     uniprot_id = st.text_input("Enter UniProt ID (Optional)")
     st.text(f"You selected: {organism}")
 
-    if uniprot_id:
-        sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
+    sequence = None  # Initialize it properly
 
-    if not sequence:
-        sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
-        protein_name = st.text_input("Protein Name", "Manual_Protein")
+# If UniProt ID is provided, fetch the sequence
+if uniprot_id:
+    sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
+
+# If no sequence is provided via UniProt ID, use the default sequence or ask user input
+if not sequence:
+    sequence = st.text_area("Paste Protein Sequence:", default_seq, height=200)
+    protein_name = st.text_input("Protein Name", "Manual_Protein")
     
     model_type = "T-cell" if page == "T cell epitope predictor" else "B-cell"
 
