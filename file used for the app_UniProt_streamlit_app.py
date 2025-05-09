@@ -134,7 +134,7 @@ def add_features(df):
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
 
-# ---------- Step 3: Peptide Generation ----------
+#  Step 3: Peptide Generation 
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
@@ -142,7 +142,8 @@ def generate_peptides(sequence, min_length=8, max_length=11):
             peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
 
-# ---------- Step 4: Simulate Peptide Feature Data ----------
+#  Step 4: Simulate Peptide Feature Data
+
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
@@ -179,7 +180,8 @@ st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Model Training", "T cell epitope predictor", "B cell epitope predictor", "Data Overview"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
-# ---------- Step 6: Data Overview ----------
+#  Step 6: Data Overview 
+
 if page == "Data Overview":
     st.header("Data Overview")
     st.subheader("B-cell Dataset")
@@ -191,7 +193,8 @@ if page == "Data Overview":
     st.subheader("COVID Test Dataset")
     st.dataframe(df_test.head())
 
-# ---------- Step 7: Model Training ----------
+# Step 7: Model Training 
+
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -242,7 +245,7 @@ elif page == "Model Training":
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
 
-# ---------- Step 8: Epitope Prediction (T/B Cell) ----------
+# Step 8: Epitope Prediction (T and B Cell)
 elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     st.header("Epitope Prediction")
     model_type = "T-cell" if "T" in page else "B-cell"
@@ -255,7 +258,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
         if not sequence:
-            st.warning("⚠️ Could not fetch sequence from UniProt. Please paste it manually below.")
+            st.warning("Could not fetch sequence from UniProt. Please paste it manually below.")
     
     if st.button("Generate & Predict") and sequence.strip():
         df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
@@ -289,7 +292,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
 
-        st.subheader("immunogenicity score Distribution")
+        st.subheader("immunogenicity Distribution")
         st.plotly_chart(px.box(df, y="immunogenicity_score"))
 
         st.subheader("Peptide Length Distribution")
