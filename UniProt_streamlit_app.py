@@ -23,7 +23,7 @@ st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Sidebar with image of the human immune system
 with st.sidebar:
-    st.image("human_immune_system.png", caption="Human Immune System", use_column_width=True)  # Replace with your image path
+    st.image("https://example.com/path/to/your/image.png", caption="Example Image", use_container_width=True)  
     st.markdown("<br>", unsafe_allow_html=True)  # Adding some space for styling
     st.markdown("""
         <style>
