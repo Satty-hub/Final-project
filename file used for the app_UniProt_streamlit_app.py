@@ -287,6 +287,8 @@ protein_name = ""
 # Try fetching sequence if UniProt ID is provided
 # Get sequence from UniProt or manual entry
 
+sequence = ""
+protein_name = ""
 uniprot_id = st.text_input("Enter UniProt ID:")
 if uniprot_id:
     sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
