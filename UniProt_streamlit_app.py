@@ -1,7 +1,6 @@
 # This Python (Pandas) code can be used to predict the T-cell and B-cell epitope using UniProt ID or Protein sequence
 
 # Import all required libraries
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -19,34 +18,27 @@ import random
 import joblib
 import os
 
-# Add the background and banner in the app
+# Set page config at the very top
+st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-st.markdown(
-    """
+# Add custom CSS background and style
+st.markdown("""
     <style>
-    .stApp {
-        background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+    .main {
+        background-image: url('https://images.unsplash.com/photo-1588776814546-ec7e4b20d1cc');
         background-size: cover;
-        background-color: #f7fdfc;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: white;
     }
-    .css-1d391kg, .css-18e3th9 {
-        background-color: #f7fdfc;
+    .stApp {
+        background-color: rgba(0, 0, 0, 0.7);
     }
-    .block-container {
-        padding-top: 2rem;
-    }
-    h1, h2, h3, h4 {
-        color: #004d66;
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff;
     }
     </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.image(
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/SARS-CoV-2_without_background.png/800px-SARS-CoV-2_without_background.png",
-    use_column_width=True,
-    caption="SARS-CoV-2 (Virus Structure)")
+""", unsafe_allow_html=True)
 
 # Step 1: Upload the CSV files (SARS-CoV-2 and IEDB datasets)
 @st.cache_data
@@ -127,18 +119,18 @@ def fetch_sequence_from_uniprot(uniprot_id):
         return seq, name
     return None, None
 
-# Utility to download CSV
 @st.cache_data
 def convert_df_to_csv(df):
-    return df.to_csv(index=False).encode('utf-8')
+    return df.to_csv(index=False).encode("utf-8")
 
 # Streamlit Layout and Navigation
-st.set_page_config(layout="wide")
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Model Training", "T cell epitope predictor", "B cell epitope predictor", "Data Overview"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
-# === DATA OVERVIEW ===
+
+#  Data overview to see the input and output
+
 if page == "Data Overview":
     st.header("📊 Data Overview")
     st.subheader("🔹 B-cell Dataset")
@@ -155,7 +147,8 @@ if page == "Data Overview":
     if st.checkbox("Show T-cell Preprocessing"):
         st.dataframe(add_features(df_train_t).head())
 
-# === MODEL TRAINING ===
+# Train th emodel whenever required to bwt better performance and accuracy
+
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
