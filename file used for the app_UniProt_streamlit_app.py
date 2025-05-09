@@ -18,6 +18,7 @@ import joblib
 import os
 
 # Background and navigator Config and Custom Styling 
+
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Sidebar with image of the human immune system
@@ -89,10 +90,26 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# --- Function to fetch protein sequence from UniProt ---
+def fetch_sequence_from_uniprot(uniprot_id):
+    try:
+        url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.fasta"
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            return "", ""
+
+        lines = response.text.splitlines()
+        protein_name = lines[0].split("|")[-1].strip() if lines else "Unknown"
+        sequence = ''.join(lines[1:])  # Join all sequence lines
+
+        return sequence, protein_name
+    except Exception as e:
+        return "", ""
+
 # Step 1: Upload the dataset, since data is in download I use the link for download
 
 @st.cache_data
-
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
     covid_url = "https://drive.google.com/uc?id=13JRk-wG8GggBTA-3J1U4R5x3nhrT7KbY&export=download"
@@ -110,7 +127,6 @@ def load_data():
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
 # ---------- Step 2: Feature Engineering ----------
-
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -119,7 +135,6 @@ def add_features(df):
     return df
 
 # ---------- Step 3: Peptide Generation ----------
-
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
@@ -128,7 +143,6 @@ def generate_peptides(sequence, min_length=8, max_length=11):
     return peptides
 
 # ---------- Step 4: Simulate Peptide Feature Data ----------
-
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
@@ -156,16 +170,11 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
                 "immunogenicity_score": round(random.uniform(0.0, 1.0), 3)
             }
             rows.append(row)
-        except Exception as e:
-            st.error(f"Error generating peptide: {e}")
+        except:
             continue
-    df = pd.DataFrame(rows)
-    if 'immunogenicity_score' not in df.columns:
-        st.error("immunogenicity_score column is missing in peptide data!")
-    return df
+    return pd.DataFrame(rows)
 
 # ---------- Step 5: Streamlit Layout ----------
-
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Model Training", "T cell epitope predictor", "B cell epitope predictor", "Data Overview"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
@@ -215,27 +224,23 @@ elif page == "Model Training":
 
     test_size = st.slider("Test Size", 0.1, 0.5, 0.25)
     random_state = st.number_input("Random Seed", 0, 100, 42)
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_size, random_state=random_state)
 
-    model = RandomForestClassifier(n_estimators=100, random_state=random_state)
-    model.fit(X_train, y_train)
+    if st.button("Train Model"):
+        model = RandomForestClassifier(n_estimators=300, random_state=random_state)
+        model.fit(X_train, Y_train)
+        Y_pred = model.predict(X_test)
 
-    # Save the model and scaler for prediction use
-    if st.button("Save Model"):
-        model_filename = f"{choice.lower()}-rf_model.pkl"
-        scaler_filename = f"{choice.lower()}-scaler.pkl"
-        joblib.dump(model, model_filename)
-        joblib.dump(scaler, scaler_filename)
-        st.success(f"Model and Scaler saved as {model_filename} and {scaler_filename}")
+        st.success("Model trained!")
+        st.write("Accuracy:", accuracy_score(Y_test, Y_pred))
+        st.text(classification_report(Y_test, Y_pred))
 
-    y_pred = model.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
-    st.write(f"Accuracy: {acc * 100:.2f}%")
-    st.write(classification_report(y_test, y_pred))
-    cm = confusion_matrix(y_test, y_pred)
-    fig = plt.figure(figsize=(8, 6))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
-    st.pyplot(fig)
+        fig, ax = plt.subplots()
+        sns.heatmap(confusion_matrix(Y_test, Y_pred), annot=True, fmt='d', ax=ax)
+        st.pyplot(fig)
+
+        joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
+        joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
 
 # ---------- Step 8: Epitope Prediction (T/B Cell) ----------
 elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
@@ -247,18 +252,15 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     sequence = st.text_area("Paste Protein Sequence:", height=200)
     protein_name = st.text_input("Protein Name", "Manual_Protein")
 
+    if uniprot_id:
+        sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
+        if not sequence:
+            st.warning("Could not fetch sequence from UniProt. Please paste it manually below.")
+    
     if st.button("Generate & Predict") and sequence.strip():
-        # Generate peptides from protein sequence
         df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
+        df = add_features(df)
 
-        # Check the columns in the dataframe
-        st.write("Columns in DataFrame:", df.columns)  # Debugging step to check columns
-        missing = [col for col in FEATURE_COLUMNS if col not in df.columns]
-        if missing:
-            st.error(f"Missing columns: {missing}")
-            st.stop()
-
-        # Load trained model and scaler
         model_file = f"{model_type.lower()}-rf_model.pkl"
         scaler_file = f"{model_type.lower()}-scaler.pkl"
 
@@ -269,14 +271,21 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         model = joblib.load(model_file)
         scaler = joblib.load(scaler_file)
 
-        # Ensure all necessary features are present before prediction
-        X_pred = scaler.transform(df[FEATURE_COLUMNS])
+        feature_cols = [
+            'protein_seq_length', 'parent_protein_id_length', 'peptide_length',
+            'chou_fasman', 'emini', 'kolaskar_tongaonkar', 'parker',
+            'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
+        ]
+
+        if not all(col in df.columns for col in feature_cols):
+            st.error("Some features are missing.")
+            st.stop()
+
+        X_pred = scaler.transform(df[feature_cols])
         df['prediction'] = model.predict(X_pred)
 
-        # Display results
         st.dataframe(df)
 
-        # Additional plots
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
 
@@ -290,5 +299,4 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         fig = px.scatter(df, x="start_position", y="end_position", color="prediction")
         st.plotly_chart(fig)
 
-        # Add download button for the CSV
         st.download_button("Download CSV", df.to_csv(index=False), file_name=f"{protein_name}_predictions.csv")
