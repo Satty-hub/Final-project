@@ -43,7 +43,7 @@ st.markdown("""
 
         /* Sidebar styling */
         section[data-testid="stSidebar"] {
-            background-image: url("https://cdn.pixabay.com/photo/2021/06/04/05/34/coronavirus-6309319_960_720.jpg"); /* Add your immune system image here */
+            background-image: url("https://s.yimg.com/ny/api/res/1.2/7aGs1rFQIzE87HQNETbYLA--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyNDI7aD02OTk-/https://media.zenfs.com/en/aol_prevention_182/15289745b16f19ade306d43d2f2e958b"); /* Add your immune system image here */
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
