@@ -23,15 +23,29 @@ import streamlit as st
 
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-# Sidebar with image
+# Sidebar with immune system and virus interaction image
 with st.sidebar:
-    st.image("https://via.placeholder.com/300", caption="Placeholder Image", use_container_width=True)
+    st.image(
+        "https://www.researchgate.net/profile/Helena-Fernandes-2/publication/357219184/figure/fig1/AS:1102838850678784@1639756211424/Virus-interactions-with-the-human-immune-system-Examples-of-virus-immune-system.png",
+        caption="Virus-Immune System Interaction",
+        use_container_width=True
+    )
     st.markdown("<br>", unsafe_allow_html=True)
 
-# Add custom CSS
+# Custom CSS
 st.markdown("""
     <style>
-        /* Main app background */
+        section[data-testid="stSidebar"] {
+            background-color: rgba(0, 0, 0, 0.05);
+            width: 320px !important;
+        }
+
+        section[data-testid="stSidebar"] img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         .stApp {
             background-image: 
                 url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
@@ -42,47 +56,6 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
-        /* Correct sidebar styling */
-        section[data-testid="stSidebar"] {
-            background-color: rgba(0, 0, 0, 0.05);  /* Light background */
-            width: 300px !important;               /* Expand width */
-        }
-
-        section[data-testid="stSidebar"] img {
-            display: block;
-            margin: 0 auto;
-        }
-
-        /* Custom radio styling */
-        .stRadio {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background-color: rgba(255, 255, 255, 0.85);
-            border-radius: 10px;
-            padding: 15px 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .stRadio label {
-            font-size: 18px;
-            color: #1e3d59;
-        }
-
-        .stRadio div.stRadioItem {
-            padding: 10px;
-            margin: 5px 0;
-        }
-
-        .stRadio div.stRadioItem:hover {
-            background-color: rgba(0, 123, 255, 0.1);
-            cursor: pointer;
-        }
-
-        /* Block content styling */
         .block-container {
             background-color: rgba(255, 255, 255, 0.85);
             padding: 2rem;
@@ -96,7 +69,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- Function to fetch protein sequence from UniProt ---
+#  Function to fetch protein sequence from UniProt
+
 def fetch_sequence_from_uniprot(uniprot_id):
     try:
         url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.fasta"
