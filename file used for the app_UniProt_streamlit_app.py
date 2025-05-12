@@ -293,10 +293,10 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
             linecolor='white',
             cbar_kws={'shrink': 0.7},
             square=True
-       )
+        )
 
-       ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
-       st.pyplot(fig)
+        ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
+        st.pyplot(fig)
 
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
