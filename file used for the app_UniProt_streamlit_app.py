@@ -40,10 +40,9 @@ st.markdown("""
 
         # Sidebar background styling (left side only)
         section[data-testid="stSidebar"] {
-            position: relative;
-            background-color: rgba(255, 255, 255, 0.9); # Slight transparency for sidebar
+            background-color: rgba(255, 255, 255, 0.9);  # Slight transparency for sidebar
             height: 100vh;  # Full height for the sidebar
-            padding-top: 60px; # Adds space for the Navigator Menu
+            padding-top: 0px;  # No padding to let image fit below the Navigator menu
             width: 250px;  # Sidebar width
         }
 
@@ -51,20 +50,20 @@ st.markdown("""
         section[data-testid="stSidebar"]::after {
             content: "";
             position: absolute;
-            top: 60px;  # Position the image below the Navigator menu
+            top: 0px;  # Position the image at the top of the sidebar
             left: 0;
             width: 100%;
             height: 100%;
             background-image: url('https://media.healthdirect.org.au/images/inline/original/organs-of-the-immune-system-illustration-18584a.jpg');
-            background-size: contain; # Ensure image is contained within the sidebar
+            background-size: cover;  # Make sure the image fills the sidebar
             background-repeat: no-repeat;
             background-position: center;
-            z-index: -1; # Keeps the image behind the sidebar content
+            z-index: -1;  # Keeps the image behind the sidebar content
         }
 
         # Content block styling
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85); # Slight transparency
+            background-color: rgba(255, 255, 255, 0.85);  # Slight transparency
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
@@ -77,8 +76,6 @@ st.markdown("""
 
     </style>
 """, unsafe_allow_html=True)
-
-
 
 # Step 1: Upload the dataset, since data is in download I use the link for download
 
