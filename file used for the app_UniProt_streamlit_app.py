@@ -18,11 +18,13 @@ import joblib
 import os
 
 # Background and navigator Config and Custom Styling 
+
 # Set page configuration
 
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Sidebar with image and custom CSS
+
 st.markdown("""
     <style>
         /* Main app background styling */
@@ -36,56 +38,40 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
-        /* Sidebar background styling (left side only) */
+        # Sidebar background styling (left side only) 
+        
         section[data-testid="stSidebar"] {
-            background-color: rgba(255, 255, 255, 0.9); /* Slight transparency for sidebar */
-            background-image: url("https://media.healthdirect.org.au/images/inline/original/organs-of-the-immune-system-illustration-18584a.jpg");
-            background-size: cover;
-            background-position: top left; /* Ensure the image is positioned on the left */
+            background-color: rgba(255, 255, 255, 0.9); # Slight transparency for sidebar 
+            height: 100vh;  # Full height for the sidebar 
+            width: 250px; # Sidebar width
+            padding-top: 60px; # Adds space for the Navigator Menu 
             background-repeat: no-repeat;
-            height: 100vh;  /* Ensure sidebar covers full height */
-            width: 250px;  /* Define a fixed width for the sidebar */
-            padding-bottom: 50px;  /* Padding to create space below the menu */
+            background-position: top left; # Ensures image starts from top-left 
+            background-image: url('https://media.healthdirect.org.au/images/inline/original/organs-of-the-immune-system-illustration-18584a.jpg');
+            background-size: contain; # Ensures image fits nicely within the sidebar
         }
 
-        /* Adjust the sidebar's menu appearance */
+        # Ensuring the sidebar content remains visible and not behind the image 
+        
         section[data-testid="stSidebar"] .sidebar-content {
-            background-color: rgba(255, 255, 255, 0.7); /* Adding transparency to sidebar content */
+            background-color: rgba(255, 255, 255, 0.7); # Adding transparency to sidebar content 
         }
 
-        /* Content block styling */
+       # Content block styling 
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85); /* Slight transparency */
+            background-color: rgba(255, 255, 255, 0.85); # Slight transparency 
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
         }
 
-        /* Text styles for headers */
+        # Text styles for headers 
         h1, h2, h3 {
             color: #1e3d59;
         }
 
     </style>
 """, unsafe_allow_html=True)
-
-#  Function to fetch protein sequence from UniProt
-
-def fetch_sequence_from_uniprot(uniprot_id):
-    try:
-        url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.fasta"
-        response = requests.get(url)
-
-        if response.status_code != 200:
-            return "", ""
-
-        lines = response.text.splitlines()
-        protein_name = lines[0].split("|")[-1].strip() if lines else "Unknown"
-        sequence = ''.join(lines[1:])  # Join all sequence lines
-
-        return sequence, protein_name
-    except Exception as e:
-        return "", ""
 
 # Step 1: Upload the dataset, since data is in download I use the link for download
 
