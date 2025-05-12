@@ -26,7 +26,7 @@ st.set_page_config(layout="wide", page_title="Epitope Predictor")
 # Sidebar with immune system and virus interaction image
 with st.sidebar:
     st.image(
-        "https://www.researchgate.net/profile/Helena-Fernandes-2/publication/357219184/figure/fig1/AS:1102838850678784@1639756211424/Virus-interactions-with-the-human-immune-system-Examples-of-virus-immune-system.png",
+        "https://cdn.pixabay.com/photo/2021/06/04/05/34/coronavirus-6309319_960_720.jpg",
         caption="Virus-Immune System Interaction",
         use_container_width=True
     )
