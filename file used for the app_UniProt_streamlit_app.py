@@ -278,10 +278,25 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
 
         st.subheader("Feature Relationships with Immunogenicity Score")
 
-        for feature in feature_cols:
-              fig = px.scatter(df, x=feature, y="immunogenicity_score", color="prediction", trendline="ols",
-                     title=f"{feature} vs Immunogenicity Score")
-              st.plotly_chart(fig)
+        st.subheader("📊 Feature Correlation Heatmap")
+
+        corr = df[feature_cols + ['immunogenicity_score']].corr()
+
+        fig, ax = plt.subplots(figsize=(12, 10))
+
+        sns.heatmap(
+            corr,
+            annot=True,
+            fmt=".2f",
+            cmap="viridis",  # You can try "coolwarm", "magma", "cubehelix", etc.
+            linewidths=0.5,
+            linecolor='white',
+            cbar_kws={'shrink': 0.7},
+            square=True
+       )
+
+       ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
+       st.pyplot(fig)
 
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
