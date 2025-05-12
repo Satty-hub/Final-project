@@ -21,27 +21,41 @@ import os
 
 import streamlit as st
 
-# Page configuration
+# Set page configuration
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-# Sidebar with image and custom styling
+# Sidebar with image and custom CSS
 with st.sidebar:
     st.markdown("""
         <style>
-            /* Add some padding to the top of the sidebar to push the menu down */
+            /* Styling to push the sidebar content down */
             section[data-testid="stSidebar"] {
-                padding-top: 50px !important;  /* Push the sidebar content down */
-                background-color: rgba(0, 0, 0, 0.05);  /* Light background */
-                width: 320px !important;
+                padding-top: 50px !important; /* Push down sidebar content */
+                background-color: rgba(0, 0, 0, 0.05) !important;  /* Light transparent background */
+                width: 320px !important; /* Ensure sidebar width */
+                border-radius: 10px;  /* Optional: Rounded corners for sidebar */
             }
 
-            /* Center the image in the sidebar */
+            /* Center the image and ensure it's large enough */
             section[data-testid="stSidebar"] img {
                 display: block;
                 margin-left: auto;
                 margin-right: auto;
-                border-radius: 10px;  /* Optional: Rounded corners for the image */
+                max-width: 100%;
+                border-radius: 10px; /* Optional: Rounded corners for the image */
             }
+
+            /* Optional: Style the sidebar menu (Navigation) items */
+            section[data-testid="stSidebar"] div[role="group"] {
+                padding-top: 20px;
+            }
+
+            section[data-testid="stSidebar"] div[role="group"] button {
+                font-weight: bold;
+                font-size: 18px;
+                color: #1e3d59;
+            }
+
         </style>
     """, unsafe_allow_html=True)
 
@@ -53,10 +67,10 @@ with st.sidebar:
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
-# Custom CSS for the background of the app
+# Main content with background image
 st.markdown("""
     <style>
-        /* Main content background styling */
+        /* Main app background styling */
         .stApp {
             background-image: 
                 url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
@@ -67,24 +81,25 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
-        /* Adjust the content block to have a semi-transparent white background */
+        /* Content block styling */
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85);  /* Slightly transparent background */
+            background-color: rgba(255, 255, 255, 0.85); /* Slight transparency */
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
         }
 
-        /* Heading text styling */
+        /* Text styles for headers */
         h1, h2, h3 {
             color: #1e3d59;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Main content area
+# Main content of the app
 st.title("Epitope Predictor")
 st.write("This application predicts epitopes based on input data.")
+
 
 #  Function to fetch protein sequence from UniProt
 
