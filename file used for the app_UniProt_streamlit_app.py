@@ -24,8 +24,28 @@ import streamlit as st
 # Page configuration
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-# Sidebar image with custom styling
+# Sidebar with image and custom styling
 with st.sidebar:
+    st.markdown("""
+        <style>
+            /* Add some padding to the top of the sidebar to push the menu down */
+            section[data-testid="stSidebar"] {
+                padding-top: 50px !important;  /* Push the sidebar content down */
+                background-color: rgba(0, 0, 0, 0.05);  /* Light background */
+                width: 320px !important;
+            }
+
+            /* Center the image in the sidebar */
+            section[data-testid="stSidebar"] img {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                border-radius: 10px;  /* Optional: Rounded corners for the image */
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Display sidebar image
     st.image(
         "https://cdn.pixabay.com/photo/2021/06/04/05/34/coronavirus-6309319_960_720.jpg",
         caption="Immune System & Virus Interaction",
@@ -33,24 +53,9 @@ with st.sidebar:
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
-# Custom CSS for sidebar and main content
+# Custom CSS for the background of the app
 st.markdown("""
     <style>
-        /* Custom sidebar styles */
-        section[data-testid="stSidebar"] {
-            background-color: rgba(0, 0, 0, 0.05); /* Light sidebar background */
-            width: 320px !important;
-            padding-top: 10px;
-        }
-
-        /* Centering the image in the sidebar */
-        section[data-testid="stSidebar"] img {
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-            border-radius: 10px; /* Optional: Add rounded corners to the image */
-        }
-
         /* Main content background styling */
         .stApp {
             background-image: 
@@ -62,9 +67,9 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
-        /* Adjusting the content container */
+        /* Adjust the content block to have a semi-transparent white background */
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent background for the content */
+            background-color: rgba(255, 255, 255, 0.85);  /* Slightly transparent background */
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
