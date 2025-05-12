@@ -21,9 +21,10 @@ import os
 
 import streamlit as st
 
+# Page configuration
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-# Sidebar with immune system image
+# Sidebar with image of the immune system
 with st.sidebar:
     st.image(
         "https://cdn.pixabay.com/photo/2021/06/04/05/34/coronavirus-6309319_960_720.jpg",
@@ -32,20 +33,24 @@ with st.sidebar:
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
-# Custom CSS
+# Custom CSS for styling
 st.markdown("""
     <style>
+        /* Sidebar image and background color */
         section[data-testid="stSidebar"] {
-            background-color: rgba(0, 0, 0, 0.05);
+            background-color: rgba(0, 0, 0, 0.05); /* Light sidebar background */
             width: 320px !important;
         }
 
+        /* Centering the sidebar image */
         section[data-testid="stSidebar"] img {
             display: block;
             margin-left: auto;
             margin-right: auto;
+            border-radius: 10px; /* Optional: add rounded corners to the image */
         }
 
+        /* Background styling for the main app area */
         .stApp {
             background-image: 
                 url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
@@ -56,13 +61,15 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
+        /* Styling for content area */
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85);
+            background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent background */
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
         }
 
+        /* Heading text color */
         h1, h2, h3 {
             color: #1e3d59;
         }
