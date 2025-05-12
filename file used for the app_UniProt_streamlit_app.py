@@ -278,30 +278,10 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
 
         st.subheader("Feature Relationships with Immunogenicity Score")
 
-        st.subheader("📊 Feature Correlation Heatmap")
-
-        corr = df[feature_cols + ['immunogenicity_score']].corr()
-
-        fig, ax = plt.subplots(figsize=(12, 10))
-
-        sns.heatmap(
-            corr,
-            annot=True,
-            fmt=".2f",
-            cmap="viridis",  # You can try "coolwarm", "magma", "cubehelix", etc.
-            linewidths=0.5,
-            linecolor='white',
-            cbar_kws={'shrink': 0.7},
-            square=True
-        )
-
-        ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
-        st.pyplot(fig)
-
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
 
-        st.subheader("📊 Peptide Length Distribution (KDE Plot)")
+        st.subheader("Peptide Length Distribution (KDE Plot)")
 
 
       # Create KDE plot for peptide length
@@ -336,3 +316,24 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
            title="Start vs End Position Distribution by Prediction"
         )
         st.plotly_chart(fig)
+
+
+      st.subheader("Feature Correlation Heatmap")
+
+        corr = df[feature_cols + ['immunogenicity_score']].corr()
+
+        fig, ax = plt.subplots(figsize=(12, 10))
+
+        sns.heatmap(
+            corr,
+            annot=True,
+            fmt=".2f",
+            cmap="viridis",  # You can try "coolwarm", "magma", "cubehelix", etc.
+            linewidths=0.5,
+            linecolor='white',
+            cbar_kws={'shrink': 0.7},
+            square=True
+        )
+
+        ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
+        st.pyplot(fig)
