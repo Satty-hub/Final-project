@@ -19,11 +19,12 @@ import os
 
 # Background and navigator Config and Custom Styling 
 
-import streamlit as st
+# Background and navigator Config and Custom Styling 
 
 import streamlit as st
 
 # Set page configuration
+
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Sidebar with image and custom CSS
@@ -50,6 +51,17 @@ st.markdown("""
             height: 100vh;  /* Set the sidebar height to full viewport height */
         }
 
+        /* Adjust the sidebar image positioning */
+        section[data-testid="stSidebar"] img {
+            width: 100%;
+            height: auto;
+        }
+
+        /* Sidebar menu styling */
+        .css-1v3fvcr { /* This class targets the Sidebar menu specifically */
+            background-color: rgba(255, 255, 255, 0.7) !important; /* Adjust transparency of the sidebar menu */
+        }
+
         /* Content block styling */
         .block-container {
             background-color: rgba(255, 255, 255, 0.85); /* Slight transparency */
@@ -62,19 +74,8 @@ st.markdown("""
         h1, h2, h3 {
             color: #1e3d59;
         }
-
-        /* Adjust the sidebar image positioning */
-        section[data-testid="stSidebar"] img {
-            width: 100%;
-            height: auto;
-        }
-
     </style>
 """, unsafe_allow_html=True)
-
-# Main content
-st.title("Epitope Predictor")
-st.write("This application predicts epitopes based on input data.")
 
 #  Function to fetch protein sequence from UniProt
 
