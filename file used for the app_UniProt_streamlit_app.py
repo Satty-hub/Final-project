@@ -274,10 +274,6 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Immunogenicity Score Distribution")
         st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
 
-        st.subheader("Feature Distribution by Prediction")
-
-        st.subheader("Feature Relationships with Immunogenicity Score")
-
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
 
