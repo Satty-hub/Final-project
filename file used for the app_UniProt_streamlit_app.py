@@ -27,7 +27,7 @@ st.set_page_config(layout="wide", page_title="Epitope Predictor")
 # Sidebar with image and custom CSS
 st.markdown("""
     <style>
-        # Main app background styling
+        /* Main app background styling */
         .stApp {
             background-image: 
                 url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
@@ -38,38 +38,39 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
-        # Sidebar background styling (left side only)
+        /* Sidebar background styling (left side only) */
         section[data-testid="stSidebar"] {
-            background-color: rgba(255, 255, 255, 0.9);  # Slight transparency for sidebar
-            height: 100vh;  # Full height for the sidebar
-            padding-top: 0px;  # No padding to let image fit below the Navigator menu
-            width: 250px;  # Sidebar width
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.9); /* Slight transparency for sidebar */
+            height: 100vh;  /* Full height for the sidebar */
+            padding-top: 60px; /* Adds space for the Navigator Menu */
+            width: 250px;  /* Sidebar width */
         }
 
-        # Adding the image background only below the Navigator menu
+        /* Adding the image background only below the Navigator menu */
         section[data-testid="stSidebar"]::after {
             content: "";
             position: absolute;
-            top: 0px;  # Position the image at the top of the sidebar
+            top: 60px;  /* Position the image below the Navigator menu */
             left: 0;
             width: 100%;
             height: 100%;
             background-image: url('https://media.healthdirect.org.au/images/inline/original/organs-of-the-immune-system-illustration-18584a.jpg');
-            background-size: cover;  # Make sure the image fills the sidebar
+            background-size: contain; /* Ensure image is contained within the sidebar */
             background-repeat: no-repeat;
             background-position: center;
-            z-index: -1;  # Keeps the image behind the sidebar content
+            z-index: -1; /* Keeps the image behind the sidebar content */
         }
 
-        # Content block styling
+        /* Content block styling */
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85);  # Slight transparency
+            background-color: rgba(255, 255, 255, 0.85); /* Slight transparency */
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
         }
 
-        # Text styles for headers
+        /* Text styles for headers */
         h1, h2, h3 {
             color: #1e3d59;
         }
