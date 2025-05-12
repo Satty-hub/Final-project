@@ -301,16 +301,18 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
 
-        st.subheader("📊 Peptide Length Distribution (Box Plot)")
+        st.subheader("📊 Peptide Length Distribution (KDE Plot)")
 
-# Create a box plot of peptide lengths
-fig = px.box(
-    df,
-    y="peptide_length",
-    color="prediction",  # Optional: to color by predictions
-    title="Peptide Length Distribution with Box Plot"
-)
-st.plotly_chart(fig)
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Create KDE plot for peptide length
+plt.figure(figsize=(10, 6))
+sns.kdeplot(df["peptide_length"], shade=True, color="skyblue", alpha=0.6)
+plt.title("Peptide Length Distribution (KDE Plot)")
+plt.xlabel("Peptide Length")
+plt.ylabel("Density")
+st.pyplot(plt)
 
         st.subheader("Aromaticity Distribution")
         st.plotly_chart(px.violin(df, y="aromaticity", box=True))
