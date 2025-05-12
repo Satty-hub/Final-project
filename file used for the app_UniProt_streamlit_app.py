@@ -230,6 +230,8 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     sequence = st.text_area("Paste Protein Sequence:", height=200)
     protein_name = st.text_input("Protein Name", "Manual_Protein")
 
+# Fetch the sequence directly from UniProt using UniProt_id.
+
 def fetch_sequence_from_uniprot(uniprot_id):
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
