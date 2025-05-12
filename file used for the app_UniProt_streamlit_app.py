@@ -274,9 +274,11 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Immunogenicity Score Distribution")
         st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
 
-        st.subheader("Pairwise Feature Plot")
-        pairwise_cols = feature_cols + ['immunogenicity_score']
-        st.plotly_chart(px.scatter_matrix(df, dimensions=pairwise_cols, color="prediction"))
+        st.subheader("Feature Correlation Heatmap")
+        corr = df[feature_cols + ['immunogenicity_score']].corr()
+        fig, ax = plt.subplots(figsize=(10, 8))
+        sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
+        st.pyplot(fig)
 
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
@@ -287,5 +289,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Aromaticity Distribution")
         st.plotly_chart(px.violin(df, y="aromaticity", box=True))
 
-        st.subheader("Start vs End Position of Peptides")
-        st.plotly_chart(px.scatter(df, x="start_position", y="end_position", color="prediction"))
+        st.subheader("Peptide Coverage Across Protein")
+       df['peptide_length'] = df['end_position'] - df['start_position'] + 1
+       fig = px.bar(df, x="start_position", y="peptide_length", color="prediction", hover_data=["peptide_seq"])
+       st.plotly_chart(fig)
