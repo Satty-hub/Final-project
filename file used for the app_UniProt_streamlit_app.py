@@ -274,11 +274,12 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Immunogenicity Score Distribution")
         st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
 
-        st.subheader("Feature Correlation Heatmap")
-        corr = df[feature_cols + ['immunogenicity_score']].corr()
-        fig, ax = plt.subplots(figsize=(10, 8))
-        sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
-        st.pyplot(fig)
+        st.subheader("Feature Distribution by Prediction")
+
+        for feature in feature_cols:
+        fig = px.violin(df, y=feature, color="prediction", box=True, points="all",
+                    title=f"Distribution of {feature} by Prediction")
+        st.plotly_chart(fig)
 
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
