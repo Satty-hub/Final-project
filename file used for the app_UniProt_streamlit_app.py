@@ -39,7 +39,7 @@ st.markdown("""
         /* Sidebar background styling (left side only) */
         section[data-testid="stSidebar"] {
             background-color: rgba(255, 255, 255, 0.9); /* Slight transparency for sidebar */
-            background-image: url("https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.healthdirect.gov.au%2Fimmune-system&psig=AOvVaw2WfW5vOivA-XTqOTaqRP12&ust=1747126697171000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNC8kqvInY0DFQAAAAAdAAAAABAE");
+            background-image: url("https://media.healthdirect.org.au/images/inline/original/organs-of-the-immune-system-illustration-18584a.jpg");
             background-size: cover;
             background-position: top left; /* Ensure the image is positioned on the left */
             background-repeat: no-repeat;
