@@ -307,12 +307,24 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Aromaticity Distribution")
         st.plotly_chart(px.violin(df, y="aromaticity", box=True))
 
-        st.subheader("📍 Start and End Position Distributions")
+        st.subheader("📍 Distribution of Start and End Positions")
 
-       # Start position distribution
-        fig_start = px.violin(df, y="start_position", box=True, points="all", color="prediction", title="Start Position Distribution")
-        st.plotly_chart(fig_start)
+        # Reshape the dataframe for combined violin plot
+        melted_df = df.melt(
+            id_vars=["prediction"],
+            value_vars=["start_position", "end_position"],
+            var_name="position_type",
+            value_name="position_value"
+        )
 
-      # End position distribution
-        fig_end = px.violin(df, y="end_position", box=True, points="all", color="prediction", title="End Position Distribution")
-        st.plotly_chart(fig_end)
+      # Plot combined violin
+      fig = px.violin(
+          melted_df,
+          x="position_type",
+          y="position_value",
+          color="prediction",
+          box=True,
+          points="all",
+          title="Start vs End Position Distribution by Prediction"
+     )
+     st.plotly_chart(fig)
