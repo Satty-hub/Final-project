@@ -24,7 +24,7 @@ import streamlit as st
 # Page configuration
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-# Sidebar with image of the immune system
+# Sidebar image with custom styling
 with st.sidebar:
     st.image(
         "https://cdn.pixabay.com/photo/2021/06/04/05/34/coronavirus-6309319_960_720.jpg",
@@ -33,24 +33,25 @@ with st.sidebar:
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
-# Custom CSS for styling
+# Custom CSS for sidebar and main content
 st.markdown("""
     <style>
-        /* Sidebar image and background color */
+        /* Custom sidebar styles */
         section[data-testid="stSidebar"] {
             background-color: rgba(0, 0, 0, 0.05); /* Light sidebar background */
             width: 320px !important;
+            padding-top: 10px;
         }
 
-        /* Centering the sidebar image */
+        /* Centering the image in the sidebar */
         section[data-testid="stSidebar"] img {
             display: block;
             margin-left: auto;
             margin-right: auto;
-            border-radius: 10px; /* Optional: add rounded corners to the image */
+            border-radius: 10px; /* Optional: Add rounded corners to the image */
         }
 
-        /* Background styling for the main app area */
+        /* Main content background styling */
         .stApp {
             background-image: 
                 url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
@@ -61,22 +62,22 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
-        /* Styling for content area */
+        /* Adjusting the content container */
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent background */
+            background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent background for the content */
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
         }
 
-        /* Heading text color */
+        /* Heading text styling */
         h1, h2, h3 {
             color: #1e3d59;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Main content
+# Main content area
 st.title("Epitope Predictor")
 st.write("This application predicts epitopes based on input data.")
 
