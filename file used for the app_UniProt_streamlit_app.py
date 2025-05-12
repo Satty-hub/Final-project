@@ -25,49 +25,7 @@ import streamlit as st
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Sidebar with image and custom CSS
-with st.sidebar:
-    st.markdown("""
-        <style>
-            /* Styling to push the sidebar content down */
-            section[data-testid="stSidebar"] {
-                padding-top: 50px !important; /* Push down sidebar content */
-                background-color: rgba(0, 0, 0, 0.05) !important;  /* Light transparent background */
-                width: 320px !important; /* Ensure sidebar width */
-                border-radius: 10px;  /* Optional: Rounded corners for sidebar */
-            }
 
-            /* Center the image and ensure it's large enough */
-            section[data-testid="stSidebar"] img {
-                display: block;
-                margin-left: auto;
-                margin-right: auto;
-                max-width: 100%;
-                border-radius: 10px; /* Optional: Rounded corners for the image */
-            }
-
-            /* Optional: Style the sidebar menu (Navigation) items */
-            section[data-testid="stSidebar"] div[role="group"] {
-                padding-top: 20px;
-            }
-
-            section[data-testid="stSidebar"] div[role="group"] button {
-                font-weight: bold;
-                font-size: 18px;
-                color: #1e3d59;
-            }
-
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Display sidebar image
-    st.image(
-        "https://cdn.pixabay.com/photo/2021/06/04/05/34/coronavirus-6309319_960_720.jpg",
-        caption="Immune System & Virus Interaction",
-        use_container_width=True
-    )
-    st.markdown("<br>", unsafe_allow_html=True)
-
-# Main content with background image
 st.markdown("""
     <style>
         /* Main app background styling */
