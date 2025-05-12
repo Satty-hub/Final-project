@@ -318,7 +318,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.plotly_chart(fig)
 
 
-      st.subheader("Feature Correlation Heatmap")
+        st.subheader("Feature Correlation Heatmap")
 
         corr = df[feature_cols + ['immunogenicity_score']].corr()
 
