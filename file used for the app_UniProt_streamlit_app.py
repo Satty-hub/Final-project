@@ -318,7 +318,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         )
 
       # Plot combined violin
-       fig = px.violin(
+        fig = px.violin(
            melted_df,
            x="position_type",
            y="position_value",
@@ -326,5 +326,5 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
            box=True,
            points="all",
            title="Start vs End Position Distribution by Prediction"
-      )
-      st.plotly_chart(fig)
+       )
+       st.plotly_chart(fig)
