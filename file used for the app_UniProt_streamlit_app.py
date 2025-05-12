@@ -19,23 +19,19 @@ import os
 
 # Background and navigator Config and Custom Styling 
 
+import streamlit as st
+
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-# Sidebar with image of the human immune system
+# Sidebar with image
 with st.sidebar:
-    st.image("https://via.placeholder.com/150", caption="Placeholder Image", use_container_width=True)  
-    st.markdown("<br>", unsafe_allow_html=True)  # Adding some space for styling
-    st.markdown("""
-        <style>
-            .stSidebar {
-                background-color: rgba(0, 0, 0, 0.1);  /* Adding light background for contrast */
-            }
-        </style>
-    """, unsafe_allow_html=True)
+    st.image("https://via.placeholder.com/300", caption="Placeholder Image", use_container_width=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
-# Add custom CSS background and style
+# Add custom CSS
 st.markdown("""
     <style>
+        /* Main app background */
         .stApp {
             background-image: 
                 url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
@@ -46,7 +42,18 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
-        /* Stylish navigation at top-left */
+        /* Correct sidebar styling */
+        section[data-testid="stSidebar"] {
+            background-color: rgba(0, 0, 0, 0.05);  /* Light background */
+            width: 300px !important;               /* Expand width */
+        }
+
+        section[data-testid="stSidebar"] img {
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Custom radio styling */
         .stRadio {
             position: absolute;
             top: 20px;
@@ -58,7 +65,6 @@ st.markdown("""
             font-size: 16px;
             font-weight: bold;
             color: #333;
-            transition: background-color 0.3s ease;
         }
 
         .stRadio label {
@@ -76,7 +82,7 @@ st.markdown("""
             cursor: pointer;
         }
 
-        /* Block container styling */
+        /* Block content styling */
         .block-container {
             background-color: rgba(255, 255, 255, 0.85);
             padding: 2rem;
