@@ -290,6 +290,6 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.plotly_chart(px.violin(df, y="aromaticity", box=True))
 
         st.subheader("Peptide Coverage Across Protein")
-       df['peptide_length'] = df['end_position'] - df['start_position'] + 1
-       fig = px.bar(df, x="start_position", y="peptide_length", color="prediction", hover_data=["peptide_seq"])
-       st.plotly_chart(fig)
+        df['peptide_length'] = df['end_position'] - df['start_position'] + 1
+        fig = px.bar(df, x="start_position", y="peptide_length", color="prediction", hover_data=["peptide_seq"])
+        st.plotly_chart(fig)
