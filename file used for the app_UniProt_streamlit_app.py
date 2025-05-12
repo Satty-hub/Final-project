@@ -18,11 +18,6 @@ import joblib
 import os
 
 # Background and navigator Config and Custom Styling 
-
-# Background and navigator Config and Custom Styling 
-
-import streamlit as st
-
 # Set page configuration
 
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
@@ -41,30 +36,26 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
-        /* Sidebar styling */
+        /* Sidebar background styling (left side only) */
         section[data-testid="stSidebar"] {
-            background-image: url("https://s.yimg.com/ny/api/res/1.2/7aGs1rFQIzE87HQNETbYLA--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyNDI7aD02OTk-/https://media.zenfs.com/en/aol_prevention_182/15289745b16f19ade306d43d2f2e958b"); /* Add your immune system image here */
+            background-color: rgba(255, 255, 255, 0.9); /* Slight transparency for sidebar */
+            background-image: url("https://s.yimg.com/ny/api/res/1.2/7aGs1rFQIzE87HQNETbYLA--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyNDI7aD02OTk-/https://media.zenfs.com/en/aol_prevention_182/15289745b16f19ade306d43d2f2e958b");
             background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background-position: top left; /* Ensure the image is positioned on the left */
             background-repeat: no-repeat;
-            height: 100vh;  /* Set the sidebar height to full viewport height */
+            height: 100vh;  /* Ensure sidebar covers full height */
+            width: 250px;  /* Define a fixed width for the sidebar */
+            padding-bottom: 50px;  /* Padding to create space below the menu */
         }
 
-        /* Adjust the sidebar image positioning */
-        section[data-testid="stSidebar"] img {
-            width: 50%;
-            height: auto;
-        }
-
-        /* Sidebar menu styling */
-        .css-1v3fvcr { /* This class targets the Sidebar menu specifically */
-            background-color: rgba(155, 155, 155, 0.7) !important; /* Adjust transparency of the sidebar menu */
+        /* Adjust the sidebar's menu appearance */
+        section[data-testid="stSidebar"] .sidebar-content {
+            background-color: rgba(255, 255, 255, 0.7); /* Adding transparency to sidebar content */
         }
 
         /* Content block styling */
         .block-container {
-            background-color: rgba(155, 155, 155, 0.85); /* Slight transparency */
+            background-color: rgba(255, 255, 255, 0.85); /* Slight transparency */
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
@@ -74,6 +65,7 @@ st.markdown("""
         h1, h2, h3 {
             color: #1e3d59;
         }
+
     </style>
 """, unsafe_allow_html=True)
 
