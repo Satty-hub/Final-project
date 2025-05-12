@@ -23,11 +23,11 @@ import streamlit as st
 
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-# Sidebar with immune system and virus interaction image
+# Sidebar with immune system image
 with st.sidebar:
     st.image(
         "https://cdn.pixabay.com/photo/2021/06/04/05/34/coronavirus-6309319_960_720.jpg",
-        caption="Virus-Immune System Interaction",
+        caption="Immune System & Virus Interaction",
         use_container_width=True
     )
     st.markdown("<br>", unsafe_allow_html=True)
@@ -68,6 +68,10 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
+
+# Main content
+st.title("Epitope Predictor")
+st.write("This application predicts epitopes based on input data.")
 
 #  Function to fetch protein sequence from UniProt
 
