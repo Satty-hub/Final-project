@@ -18,15 +18,17 @@ import joblib
 import os
 
 # Background and navigator Config and Custom Styling 
+
 import streamlit as st
 
 # Set page configuration
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Sidebar with image and custom CSS
+
 st.markdown("""
     <style>
-        /* Main app background styling */
+     # Main app background styling 
         .stApp {
             background-image: 
                 url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
@@ -37,39 +39,41 @@ st.markdown("""
             background-position: center, bottom right;
         }
 
-        /* Sidebar background styling (left side only) */
+        # just to make sure Sidebar background styling isonly present in the left below the navigator
+        
         section[data-testid="stSidebar"] {
             position: relative;
-            background-color: rgba(255, 255, 255, 0.9); /* Slight transparency for sidebar */
-            height: 100vh;  /* Full height for the sidebar */
-            padding-top: 60px; /* Adds space for the Navigator Menu */
-            width: 250px;  /* Sidebar width */
+            background-color: rgba(255, 255, 255, 0.9); # Slight transparency for sidebar 
+            height: 100vh;  # adjust the full height for the sidebar 
+            padding-top: 60px; to adds some space for the Navigator Menu
+            width: 250px;  # Sidebar width 
         }
 
-        /* Adding the image background only below the Navigator menu */
+       # To add the image background only below the Navigator menu 
+       
         section[data-testid="stSidebar"]::after {
             content: "";
             position: absolute;
-            top: 60px;  /* Position the image below the Navigator menu */
+            top: 60px;  # Determine the position of the image  
             left: 0;
             width: 100%;
             height: 100%;
             background-image: url('https://media.healthdirect.org.au/images/inline/original/organs-of-the-immune-system-illustration-18584a.jpg');
-            background-size: contain; /* Ensure image is contained within the sidebar */
+            background-size: contain; #just to make sure image is contained within the sidebar 
             background-repeat: no-repeat;
             background-position: center;
-            z-index: -1; /* Keeps the image behind the sidebar content */
+            z-index: -1; # Keeps the image behind the sidebar content #
         }
 
-        /* Content block styling */
+       # Content block styling 
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85); /* Slight transparency */
+            background-color: rgba(255, 255, 255, 0.85); 
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
         }
 
-        /* Text styles for headers */
+        # Text styles for headers 
         h1, h2, h3 {
             color: #1e3d59;
         }
@@ -97,7 +101,8 @@ def load_data():
 
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
-# ---------- Step 2: Feature Engineering ----------
+# Step 2: Add the feature which will appears in the future
+
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -105,7 +110,8 @@ def add_features(df):
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
 
-# ---------- Step 3: Peptide Generation ----------
+# Step 3: Define the function for peptide (epitope) generation 
+
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
@@ -113,7 +119,8 @@ def generate_peptides(sequence, min_length=8, max_length=11):
             peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
 
-# ---------- Step 4: Simulate Peptide Feature Data ----------
+# Step 4: Simulate epitope Feature with data (I used Covid data)
+
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
@@ -145,12 +152,14 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
             continue
     return pd.DataFrame(rows)
 
-# ---------- Step 5: Streamlit Layout ----------
+# Step 5: Define the outline for the Streamlit app (however you want to see in the app)
+
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Model Training", "T cell epitope predictor", "B cell epitope predictor", "Data Overview"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
-# ---------- Step 6: Data Overview ----------
+# Step 6: At the end we can add data Overview page
+
 if page == "Data Overview":
     st.header("Data Overview")
     st.subheader("B-cell Dataset")
@@ -162,7 +171,8 @@ if page == "Data Overview":
     st.subheader("COVID Test Dataset")
     st.dataframe(df_test.head())
 
-# ---------- Step 7: Model Training ----------
+# Step 7: Train the model using sars data extracted from IEDB
+
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -213,7 +223,8 @@ elif page == "Model Training":
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
 
-# Epitope Prediction (T/B Cell)
+# Define the function for final epitope Prediction for both T and B cell
+
 elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     st.header("Epitope Prediction")
     model_type = "T-cell" if "T" in page else "B-cell"
@@ -226,7 +237,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
         if not sequence:
-            st.warning("⚠️ Could not fetch sequence from UniProt. Please paste it manually below.")
+            st.warning("Could not fetch sequence from UniProt. Please paste it manually below.")
     
     if st.button("Generate & Predict") and sequence.strip():
         df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
@@ -257,11 +268,13 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
 
         st.dataframe(df)
 
-        # --- Immunogenicity Score Plot ---
+        # Show the plot for Immunogenicity Score 
+        
         st.subheader("Immunogenicity Score Distribution")
         st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
 
-        # --- Pairwise Plot ---
+        #Plot the graph for pairwise visualization
+        
         st.subheader("Pairwise Plot of Features")
         # Select features for the pairwise plot
         pairwise_cols = [
@@ -271,6 +284,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         ]
         
         # Create pairwise plot (using plotly for an interactive plot)
+        
         st.plotly_chart(px.scatter_matrix(df, dimensions=pairwise_cols, color="prediction",
                                           title="Pairwise Plot of Peptide Features"))
 
@@ -286,5 +300,6 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Start/End Positions")
         fig = px.scatter(df, x="start_position", y="end_position", color="prediction")
         st.plotly_chart(fig)
-
+        # Add the menu to download the epitope list with all the feature as a CSV file
+        
         st.download_button("Download CSV", df.to_csv(index=False), file_name=f"{protein_name}_predictions.csv")
