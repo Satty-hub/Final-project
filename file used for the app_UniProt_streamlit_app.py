@@ -292,9 +292,9 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("📍 Start and End Position Distributions")
 
        # Start position distribution
-       fig_start = px.violin(df, y="start_position", box=True, points="all", color="prediction", title="Start Position Distribution")
-       st.plotly_chart(fig_start)
+        fig_start = px.violin(df, y="start_position", box=True, points="all", color="prediction", title="Start Position Distribution")
+        st.plotly_chart(fig_start)
 
       # End position distribution
-      fig_end = px.violin(df, y="end_position", box=True, points="all", color="prediction", title="End Position Distribution")
-      st.plotly_chart(fig_end)
+        fig_end = px.violin(df, y="end_position", box=True, points="all", color="prediction", title="End Position Distribution")
+        st.plotly_chart(fig_end)
