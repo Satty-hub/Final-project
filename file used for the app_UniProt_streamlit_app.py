@@ -53,18 +53,18 @@ st.markdown("""
 
         /* Adjust the sidebar image positioning */
         section[data-testid="stSidebar"] img {
-            width: 100%;
+            width: 50%;
             height: auto;
         }
 
         /* Sidebar menu styling */
         .css-1v3fvcr { /* This class targets the Sidebar menu specifically */
-            background-color: rgba(255, 255, 255, 0.7) !important; /* Adjust transparency of the sidebar menu */
+            background-color: rgba(155, 155, 155, 0.7) !important; /* Adjust transparency of the sidebar menu */
         }
 
         /* Content block styling */
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85); /* Slight transparency */
+            background-color: rgba(155, 155, 155, 0.85); /* Slight transparency */
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
