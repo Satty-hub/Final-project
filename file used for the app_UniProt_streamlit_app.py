@@ -301,8 +301,18 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
 
-        st.subheader("Peptide Length Distribution")
-        st.plotly_chart(px.histogram(df, x="peptide_length"))
+        st.subheader("📊 Peptide Length Distribution (with Density Plot)")
+
+       # Create a histogram with a density plot overlaid
+        fig = px.histogram(
+            df,
+            x="peptide_length",
+            marginal="rug",  # Adds a rug plot along the axis (optional)
+            opacity=0.7,
+            title="Peptide Length Distribution"
+        )
+        fig.update_traces(marker=dict(line=dict(width=0)))  # Remove bar borders
+        st.plotly_chart(fig)
 
         st.subheader("Aromaticity Distribution")
         st.plotly_chart(px.violin(df, y="aromaticity", box=True))
