@@ -21,11 +21,12 @@ import os
 
 import streamlit as st
 
+import streamlit as st
+
 # Set page configuration
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
 # Sidebar with image and custom CSS
-
 st.markdown("""
     <style>
         /* Main app background styling */
@@ -37,6 +38,16 @@ st.markdown("""
             background-attachment: fixed;
             background-repeat: no-repeat, no-repeat;
             background-position: center, bottom right;
+        }
+
+        /* Sidebar styling */
+        section[data-testid="stSidebar"] {
+            background-image: url("https://cdn.pixabay.com/photo/2021/06/04/05/34/coronavirus-6309319_960_720.jpg"); /* Add your immune system image here */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            height: 100vh;  /* Set the sidebar height to full viewport height */
         }
 
         /* Content block styling */
@@ -51,13 +62,19 @@ st.markdown("""
         h1, h2, h3 {
             color: #1e3d59;
         }
+
+        /* Adjust the sidebar image positioning */
+        section[data-testid="stSidebar"] img {
+            width: 100%;
+            height: auto;
+        }
+
     </style>
 """, unsafe_allow_html=True)
 
-# Main content of the app
+# Main content
 st.title("Epitope Predictor")
 st.write("This application predicts epitopes based on input data.")
-
 
 #  Function to fetch protein sequence from UniProt
 
