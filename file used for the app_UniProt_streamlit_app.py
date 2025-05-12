@@ -78,8 +78,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Step 1: Upload the dataset, since data is in download I use the link for download
+# Step 0.1: Define UniProt fetch function
+def fetch_sequence_from_uniprot(uniprot_id):
+    url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
+    response = requests.get(url)
+    if response.status_code == 200:
+        fasta_data = response.text.strip().split('\n')
+        protein_name = fasta_data[0][1:]
+        sequence = ''.join(fasta_data[1:])
+        return sequence, protein_name
+    else:
+        return None, None
 
+# Step 1: Upload the dataset
 @st.cache_data
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
@@ -97,8 +108,7 @@ def load_data():
 
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
-# Step 2: Add the feature which will appears in the future
-
+# Step 2: Add feature engineering
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -106,8 +116,7 @@ def add_features(df):
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
 
-# Step 3: Define the function for peptide (epitope) generation 
-
+# Step 3: Peptide generation
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
@@ -115,8 +124,7 @@ def generate_peptides(sequence, min_length=8, max_length=11):
             peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
 
-# Step 4: Simulate epitope Feature with data (I used Covid data)
-
+# Step 4: Simulate peptide data
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
@@ -148,14 +156,12 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
             continue
     return pd.DataFrame(rows)
 
-# Step 5: Define the outline for the Streamlit app (however you want to see in the app)
-
+# Step 5: Streamlit App Layout
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Model Training", "T cell epitope predictor", "B cell epitope predictor", "Data Overview"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
-# Step 6: At the end we can add data Overview page
-
+# Step 6: Data Overview Page
 if page == "Data Overview":
     st.header("Data Overview")
     st.subheader("B-cell Dataset")
@@ -167,8 +173,7 @@ if page == "Data Overview":
     st.subheader("COVID Test Dataset")
     st.dataframe(df_test.head())
 
-# Step 7: Train the model using sars data extracted from IEDB
-
+# Step 7: Model Training Page
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
@@ -219,8 +224,7 @@ elif page == "Model Training":
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
 
-# Define the function for final epitope Prediction for both T and B cell
-
+# Step 8: Epitope Predictor (T-cell & B-cell)
 elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     st.header("Epitope Prediction")
     model_type = "T-cell" if "T" in page else "B-cell"
@@ -230,25 +234,11 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     sequence = st.text_area("Paste Protein Sequence:", height=200)
     protein_name = st.text_input("Protein Name", "Manual_Protein")
 
-# Fetch the sequence directly from UniProt using UniProt_id.
-
-def fetch_sequence_from_uniprot(uniprot_id):
-    url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        fasta_data = response.text.strip().split('\n')
-        protein_name = fasta_data[0][1:]
-        sequence = ''.join(fasta_data[1:])
-        return sequence, protein_name
-    else:
-        return None, None
-
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
         if not sequence:
             st.warning("Could not fetch sequence from UniProt. Please paste it manually below.")
-    
+
     if st.button("Generate & Predict") and sequence.strip():
         df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
         df = add_features(df)
@@ -278,25 +268,15 @@ def fetch_sequence_from_uniprot(uniprot_id):
 
         st.dataframe(df)
 
-        # Show the plot for Immunogenicity Score 
-        
+        st.subheader("Download Predicted Peptides")
+        st.download_button("Download CSV", df.to_csv(index=False), file_name=f"{protein_name}_predictions.csv")
+
         st.subheader("Immunogenicity Score Distribution")
         st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
 
-        #Plot the graph for pairwise visualization
-        
-        st.subheader("Pairwise Plot of Features")
-        # Select features for the pairwise plot
-        pairwise_cols = [
-            'protein_seq_length', 'parent_protein_id_length', 'peptide_length',
-            'chou_fasman', 'emini', 'kolaskar_tongaonkar', 'parker',
-            'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability', 'immunogenicity_score'
-        ]
-        
-        # Create pairwise plot (using plotly for an interactive plot)
-        
-        st.plotly_chart(px.scatter_matrix(df, dimensions=pairwise_cols, color="prediction",
-                                          title="Pairwise Plot of Peptide Features"))
+        st.subheader("Pairwise Feature Plot")
+        pairwise_cols = feature_cols + ['immunogenicity_score']
+        st.plotly_chart(px.scatter_matrix(df, dimensions=pairwise_cols, color="prediction"))
 
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
@@ -307,9 +287,5 @@ def fetch_sequence_from_uniprot(uniprot_id):
         st.subheader("Aromaticity Distribution")
         st.plotly_chart(px.violin(df, y="aromaticity", box=True))
 
-        st.subheader("Start/End Positions")
-        fig = px.scatter(df, x="start_position", y="end_position", color="prediction")
-        st.plotly_chart(fig)
-        # Add the menu to download the epitope list with all the feature as a CSV file
-        
-        st.download_button("Download CSV", df.to_csv(index=False), file_name=f"{protein_name}_predictions.csv")
+        st.subheader("Start vs End Position of Peptides")
+        st.plotly_chart(px.scatter(df, x="start_position", y="end_position", color="prediction"))
