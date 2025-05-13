@@ -311,31 +311,31 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         var_name="position_type",
         value_name="position_value"
     )
-        fig = px.violin(
-            melted_df,
-            x="position_type",
-            y="position_value",
-            color="prediction",
-            box=True,
-            points="all",
-            title="Start vs End Position Distribution by Prediction"
-        )
-        st.plotly_chart(fig)
+    fig = px.violin(
+        melted_df,
+        x="position_type",
+        y="position_value",
+        color="prediction",
+        box=True,
+        points="all",
+        title="Start vs End Position Distribution by Prediction"
+    )
+    st.plotly_chart(fig)
 
-        st.subheader("Feature Correlation Heatmap")
-        corr = df[feature_cols + ['immunogenicity_score']].corr()
-        fig, ax = plt.subplots(figsize=(12, 10))
-        sns.heatmap(
-            corr,
-            annot=True,
-            fmt=".2f",
-            cmap="viridis",
-            linewidths=0.5,
-            linecolor='white',
-            cbar_kws={'shrink': 0.7},
-            square=True
-        )
-        ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
-        st.pyplot(fig)
-        ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
-        st.pyplot(fig)
+    st.subheader("Feature Correlation Heatmap")
+    corr = df[feature_cols + ['immunogenicity_score']].corr()
+    fig, ax = plt.subplots(figsize=(12, 10))
+    sns.heatmap(
+        corr,
+        annot=True,
+        fmt=".2f",
+        cmap="viridis",
+        linewidths=0.5,
+        linecolor='white',
+        cbar_kws={'shrink': 0.7},
+        square=True
+    )
+    ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
+    st.pyplot(fig)
+    ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
+    st.pyplot(fig)
