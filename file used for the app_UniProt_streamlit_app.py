@@ -221,13 +221,17 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         X_pred = scaler.transform(df[feature_cols])
         df['prediction'] = model.predict(X_pred)
 
+        st.subheader("List of predicted Epitopes")
+        st.dataframe(df)
+        st.download_button("Download All Predictions CSV", data=df.to_csv(index=False), file_name=f"{protein_name}_all_predictions.csv")
+
         # Provide the list of epitopes
         st.subheader("All Predicted Peptides")
         st.dataframe(df)
 
         # Download full predicted epitope sequence only
         predicted_epitopes = df[df['prediction'] == 1].copy()
-        st.subheader("Predicted Epitopes Only")
+        st.subheader("Predicted Epitopes seqquence")
         st.dataframe(predicted_epitopes[['peptide_seq']])
         st.download_button("Download Only Epitopes CSV", data=predicted_epitopes.to_csv(index=False), file_name=f"{protein_name}_epitopes_only.csv")
 
