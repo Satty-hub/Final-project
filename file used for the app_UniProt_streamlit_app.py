@@ -223,7 +223,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
 
         st.subheader("List of predicted Epitopes")
         st.dataframe(df)
-        st.download_button("Download All Predictions CSV", data=df.to_csv(index=False), file_name=f"{protein_name}_all_predictions.csv")
+        st.download_button("Download List of predicted epitope CSV", data=df.to_csv(index=False), file_name=f"{protein_name}_list_of_all_predicted_epitopes.csv")
 
         # Provide the list of epitopes
         st.subheader("All Predicted Peptides")
@@ -233,7 +233,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         predicted_epitopes = df[df['prediction'] == 1].copy()
         st.subheader("Predicted Epitopes seqquence")
         st.dataframe(predicted_epitopes[['peptide_seq']])
-        st.download_button("Download Only Epitopes CSV", data=predicted_epitopes.to_csv(index=False), file_name=f"{protein_name}_epitopes_only.csv")
+        st.download_button("Download Only Epitopes CSV", data=predicted_epitopes.to_csv(index=False), file_name=f"{protein_name}_epitopes_sequence_only.csv")
 
         # Visualization plots for epitope features
         st.subheader("Epitope Prediction Summary")
