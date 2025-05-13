@@ -287,8 +287,8 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         mime="text/csv"
     )
 
-          st.subheader("Immunogenicity Score Distribution")
-          st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
+        st.subheader("Immunogenicity Score Distribution")
+        st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
 
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
