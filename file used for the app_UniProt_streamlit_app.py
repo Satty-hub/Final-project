@@ -255,16 +255,8 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("🔍 All Predicted Peptides")
         st.dataframe(df)
 
-        # Show only predicted epitopes
-        predicted_epitopes = df[df['prediction'] == 1]
-        st.subheader("🧬 Predicted Epitopes Only")
-        if not predicted_epitopes.empty:
-            st.dataframe(predicted_epitopes.reset_index(drop=True))
-        else:
-            st.info("No predicted epitopes found.")
-
         # Show only epitope sequences in a separate table
-        st.subheader("🧪 Predicted Epitope Sequences")
+        st.subheader("Predicted Epitope Sequences")
         epitope_seqs = predicted_epitopes[['peptide_seq']].drop_duplicates().reset_index(drop=True)
 
         if not epitope_seqs.empty:
