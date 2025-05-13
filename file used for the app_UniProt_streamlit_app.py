@@ -275,7 +275,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
              file_name=f"{protein_name}_epitope_sequences.csv",
              mime="text/csv"
            )
-        else:
+    else:
           st.info("No epitope sequences to display.")
 
           st.subheader("Download Predicted Peptides")
