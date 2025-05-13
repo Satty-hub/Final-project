@@ -287,30 +287,30 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         mime="text/csv"
     )
 
-        st.subheader("Immunogenicity Score Distribution")
-        st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
+    st.subheader("Immunogenicity Score Distribution")
+    st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
 
-        st.subheader("Stability Distribution")
-        st.plotly_chart(px.box(df, y="stability"))
+    st.subheader("Stability Distribution")
+    st.plotly_chart(px.box(df, y="stability"))
 
-        st.subheader("Peptide Length Distribution (KDE Plot)")
-        plt.figure(figsize=(10, 6))
-        sns.kdeplot(df["peptide_length"], shade=True, color="skyblue", alpha=0.6)
-        plt.title("Peptide Length Distribution (KDE Plot)")
-        plt.xlabel("Peptide Length")
-        plt.ylabel("Density")
-        st.pyplot(plt)
+    st.subheader("Peptide Length Distribution (KDE Plot)")
+    plt.figure(figsize=(10, 6))
+    sns.kdeplot(df["peptide_length"], shade=True, color="skyblue", alpha=0.6)
+    plt.title("Peptide Length Distribution (KDE Plot)")
+    plt.xlabel("Peptide Length")
+    plt.ylabel("Density")
+    st.pyplot(plt)
 
-        st.subheader("Aromaticity Distribution")
-        st.plotly_chart(px.violin(df, y="aromaticity", box=True))
+    st.subheader("Aromaticity Distribution")
+    st.plotly_chart(px.violin(df, y="aromaticity", box=True))
 
-        st.subheader("Distribution of Start and End Positions")
-        melted_df = df.melt(
-            id_vars=["prediction"],
-            value_vars=["start_position", "end_position"],
-            var_name="position_type",
-            value_name="position_value"
-        )
+    st.subheader("Distribution of Start and End Positions")
+    melted_df = df.melt(
+        id_vars=["prediction"],
+        value_vars=["start_position", "end_position"],
+        var_name="position_type",
+        value_name="position_value"
+    )
         fig = px.violin(
             melted_df,
             x="position_type",
