@@ -270,7 +270,12 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     else:
           st.info("No epitope sequences to display.")
 
- # Download only predicted epitopes with all features
+ # Define and download predicted epitopes with all features
+    
+    if st.button("Generate & Predict") and sequence.strip():
+       df['prediction'] = model.predict(X_pred)
+
+    predicted_epitopes = df[df['prediction'] == 1]
     st.subheader("Download Filtered Predictions (Predicted Epitopes Only)")
     st.download_button(
         label="Download CSV (Predicted Epitopes)",
