@@ -278,8 +278,14 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     else:
           st.info("No epitope sequences to display.")
 
-          st.subheader("Download Predicted Peptides")
-          st.download_button("Download CSV", df.to_csv(index=False), file_name=f"{protein_name}_predictions.csv")
+        # Download only predicted epitopes with all features
+      st.subheader("📥 Download Filtered Predictions (Predicted Epitopes Only)")
+      st.download_button(
+            label="Download CSV (Predicted Epitopes)",
+            data=predicted_epitopes.to_csv(index=False),
+            file_name=f"{protein_name}_predicted_epitopes.csv",
+            mime="text/csv"
+     )
 
           st.subheader("Immunogenicity Score Distribution")
           st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
@@ -298,7 +304,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("Aromaticity Distribution")
         st.plotly_chart(px.violin(df, y="aromaticity", box=True))
 
-        st.subheader("📍 Distribution of Start and End Positions")
+        st.subheader("Distribution of Start and End Positions")
         melted_df = df.melt(
             id_vars=["prediction"],
             value_vars=["start_position", "end_position"],
