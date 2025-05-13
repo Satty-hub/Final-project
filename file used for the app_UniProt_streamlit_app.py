@@ -255,13 +255,28 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.subheader("🔍 All Predicted Peptides")
         st.dataframe(df)
 
-        # ✅ Show only predicted epitopes
+        # Show only predicted epitopes
         predicted_epitopes = df[df['prediction'] == 1]
         st.subheader("🧬 Predicted Epitopes Only")
         if not predicted_epitopes.empty:
             st.dataframe(predicted_epitopes.reset_index(drop=True))
         else:
             st.info("No predicted epitopes found.")
+
+        # Show only epitope sequences in a separate table
+       st.subheader("🧪 Predicted Epitope Sequences")
+       epitope_seqs = predicted_epitopes[['peptide_seq']].drop_duplicates().reset_index(drop=True)
+
+       if not epitope_seqs.empty:
+          st.dataframe(epitope_seqs)
+          st.download_button(
+             label="Download Epitope Sequences",
+             data=epitope_seqs.to_csv(index=False),
+             file_name=f"{protein_name}_epitope_sequences.csv",
+             mime="text/csv"
+           )
+      else:
+        st.info("No epitope sequences to display.")
 
         st.subheader("Download Predicted Peptides")
         st.download_button("Download CSV", df.to_csv(index=False), file_name=f"{protein_name}_predictions.csv")
