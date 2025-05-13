@@ -279,7 +279,7 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
           st.info("No epitope sequences to display.")
 
  # Download only predicted epitopes with all features
-    st.subheader("📥 Download Filtered Predictions (Predicted Epitopes Only)")
+    st.subheader("Download Filtered Predictions (Predicted Epitopes Only)")
     st.download_button(
         label="Download CSV (Predicted Epitopes)",
         data=predicted_epitopes.to_csv(index=False),
