@@ -275,14 +275,14 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
              file_name=f"{protein_name}_epitope_sequences.csv",
              mime="text/csv"
            )
-       else:
-         st.info("No epitope sequences to display.")
+        else:
+          st.info("No epitope sequences to display.")
 
-         st.subheader("Download Predicted Peptides")
-         st.download_button("Download CSV", df.to_csv(index=False), file_name=f"{protein_name}_predictions.csv")
+          st.subheader("Download Predicted Peptides")
+          st.download_button("Download CSV", df.to_csv(index=False), file_name=f"{protein_name}_predictions.csv")
 
-         st.subheader("Immunogenicity Score Distribution")
-         st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
+          st.subheader("Immunogenicity Score Distribution")
+          st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
 
         st.subheader("Stability Distribution")
         st.plotly_chart(px.box(df, y="stability"))
