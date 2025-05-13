@@ -279,13 +279,13 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
           st.info("No epitope sequences to display.")
 
         # Download only predicted epitopes with all features
-      st.subheader("📥 Download Filtered Predictions (Predicted Epitopes Only)")
-      st.download_button(
+       st.subheader("📥 Download Filtered Predictions (Predicted Epitopes Only)")
+       st.download_button(
             label="Download CSV (Predicted Epitopes)",
             data=predicted_epitopes.to_csv(index=False),
             file_name=f"{protein_name}_predicted_epitopes.csv",
             mime="text/csv"
-     )
+      )
 
           st.subheader("Immunogenicity Score Distribution")
           st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
