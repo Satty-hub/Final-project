@@ -3,23 +3,19 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import random
+import requests
+import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from imblearn.over_sampling import SMOTE
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-import requests
-import random
 import joblib
-import os
-
-# Background and navigator Config and Custom Styling 
-
-import streamlit as st
 
 # Set page configuration
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
@@ -27,7 +23,6 @@ st.set_page_config(layout="wide", page_title="Epitope Predictor")
 # Sidebar with image and custom CSS
 st.markdown("""
     <style>
-        /* Main app background styling */
         .stApp {
             background-image: 
                 url("https://images.unsplash.com/photo-1583324113626-70df0f4deaab?auto=format&fit=crop&w=2100&q=80"),
@@ -37,44 +32,35 @@ st.markdown("""
             background-repeat: no-repeat, no-repeat;
             background-position: center, bottom right;
         }
-
-        /* Sidebar background styling (left side only) */
         section[data-testid="stSidebar"] {
             position: relative;
-            background-color: rgba(255, 255, 255, 0.9); /* Slight transparency for sidebar */
-            height: 100vh;  /* Full height for the sidebar */
-            padding-top: 60px; /* Adds space for the Navigator Menu */
-            width: 250px;  /* Sidebar width */
+            background-color: rgba(255, 255, 255, 0.9);
+            height: 100vh;
+            padding-top: 60px;
+            width: 250px;
         }
-
-        /* Adding the image background only below the Navigator menu */
         section[data-testid="stSidebar"]::after {
             content: "";
             position: absolute;
-            top: 60px;  /* Position the image below the Navigator menu */
+            top: 60px;
             left: 0;
             width: 100%;
             height: 100%;
             background-image: url('https://media.healthdirect.org.au/images/inline/original/organs-of-the-immune-system-illustration-18584a.jpg');
-            background-size: contain; /* Ensure image is contained within the sidebar */
+            background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            z-index: -1; /* Keeps the image behind the sidebar content */
+            z-index: -1;
         }
-
-        /* Content block styling */
         .block-container {
-            background-color: rgba(255, 255, 255, 0.85); /* Slight transparency */
+            background-color: rgba(255, 255, 255, 0.85);
             padding: 2rem;
             border-radius: 1rem;
             margin-top: 2rem;
         }
-
-        /* Text styles for headers */
         h1, h2, h3 {
             color: #1e3d59;
         }
-
     </style>
 """, unsafe_allow_html=True)
 
@@ -266,7 +252,16 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         X_pred = scaler.transform(df[feature_cols])
         df['prediction'] = model.predict(X_pred)
 
+        st.subheader("🔍 All Predicted Peptides")
         st.dataframe(df)
+
+        # ✅ Show only predicted epitopes
+        predicted_epitopes = df[df['prediction'] == 1]
+        st.subheader("🧬 Predicted Epitopes Only")
+        if not predicted_epitopes.empty:
+            st.dataframe(predicted_epitopes.reset_index(drop=True))
+        else:
+            st.info("No predicted epitopes found.")
 
         st.subheader("Download Predicted Peptides")
         st.download_button("Download CSV", df.to_csv(index=False), file_name=f"{protein_name}_predictions.csv")
@@ -278,9 +273,6 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.plotly_chart(px.box(df, y="stability"))
 
         st.subheader("Peptide Length Distribution (KDE Plot)")
-
-
-      # Create KDE plot for peptide length
         plt.figure(figsize=(10, 6))
         sns.kdeplot(df["peptide_length"], shade=True, color="skyblue", alpha=0.6)
         plt.title("Peptide Length Distribution (KDE Plot)")
@@ -292,44 +284,37 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
         st.plotly_chart(px.violin(df, y="aromaticity", box=True))
 
         st.subheader("📍 Distribution of Start and End Positions")
-
-        # Reshape the dataframe for combined violin plot
         melted_df = df.melt(
             id_vars=["prediction"],
             value_vars=["start_position", "end_position"],
             var_name="position_type",
             value_name="position_value"
         )
-
-      # Plot combined violin
         fig = px.violin(
-           melted_df,
-           x="position_type",
-           y="position_value",
-           color="prediction",
-           box=True,
-           points="all",
-           title="Start vs End Position Distribution by Prediction"
+            melted_df,
+            x="position_type",
+            y="position_value",
+            color="prediction",
+            box=True,
+            points="all",
+            title="Start vs End Position Distribution by Prediction"
         )
         st.plotly_chart(fig)
 
-
         st.subheader("Feature Correlation Heatmap")
-
         corr = df[feature_cols + ['immunogenicity_score']].corr()
-
         fig, ax = plt.subplots(figsize=(12, 10))
-
         sns.heatmap(
             corr,
             annot=True,
             fmt=".2f",
-            cmap="viridis",  # You can try "coolwarm", "magma", "cubehelix", etc.
+            cmap="viridis",
             linewidths=0.5,
             linecolor='white',
             cbar_kws={'shrink': 0.7},
             square=True
         )
-
+        ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
+        st.pyplot(fig)
         ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
         st.pyplot(fig)
