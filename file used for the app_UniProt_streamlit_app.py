@@ -1,26 +1,28 @@
 # Epitope prediction tool using streamlit and Python
-
+# Step 0: Imports
 import streamlit as st
 import pandas as pd
 import numpy as np
-import random
 import requests
 import os
-import matplotlib.pyplot as plt
+import joblib
+import random
 import seaborn as sns
+import matplotlib.pyplot as plt
 import plotly.express as px
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.utils import shuffle
+from sklearn.impute import SimpleImputer
 from imblearn.over_sampling import SMOTE
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-import joblib
 
-# Set page configuration
+# Step 0.1: Page config and background
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
 
-# Sidebar with image and custom CSS
+# Step 0.2: Background CSS
 st.markdown("""
     <style>
         .stApp {
@@ -64,7 +66,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Step 0.1: Define UniProt fetch function
+# Step 1: Fetch UniProt Sequence
 def fetch_sequence_from_uniprot(uniprot_id):
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
@@ -76,7 +78,7 @@ def fetch_sequence_from_uniprot(uniprot_id):
     else:
         return None, None
 
-# Step 1: Upload the dataset
+# Step 2: Load datasets
 @st.cache_data
 def load_data():
     bcell_url = "https://drive.google.com/uc?id=1_v_AiVvwpSnuKCNplAimFS8sOlu-hZeQ&export=download"
@@ -91,10 +93,9 @@ def load_data():
 
     df_train_b = pd.concat([df_bcell, df_sars])
     df_train_t = pd.concat([df_tcell, df_sars])
-
     return df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t
 
-# Step 2: Add feature engineering
+# Step 3: Feature engineering
 def add_features(df):
     df = df.copy()
     df['protein_seq_length'] = df['protein_seq'].astype(str).map(len)
@@ -102,7 +103,7 @@ def add_features(df):
     df['peptide_length'] = df['end_position'] - df['start_position'] + 1
     return df
 
-# Step 3: Peptide generation
+# Step 4: Generate peptides
 def generate_peptides(sequence, min_length=8, max_length=11):
     peptides = []
     for length in range(min_length, max_length + 1):
@@ -110,7 +111,7 @@ def generate_peptides(sequence, min_length=8, max_length=11):
             peptides.append((i + 1, i + length, sequence[i:i + length]))
     return peptides
 
-# Step 4: Simulate peptide data
+# Step 5: Simulate peptide data
 def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
     valid_aa = set("ACDEFGHIKLMNPQRSTVWY")
     peptides = generate_peptides(seq)
@@ -142,43 +143,27 @@ def simulate_peptide_data(seq, parent_id="Unknown", organism="Unknown"):
             continue
     return pd.DataFrame(rows)
 
-# Step 5: Streamlit App Layout
+# Step 6: Sidebar Navigation
 st.title("B-cell and T-cell Epitope Predictor")
 page = st.sidebar.radio("Navigation", ["Model Training", "T cell epitope predictor", "B cell epitope predictor", "Data Overview"])
 df_bcell, df_tcell, df_sars, df_test, df_train_b, df_train_t = load_data()
 
-# Step 6: Data Overview Page
+# Step 7: Data Overview
 if page == "Data Overview":
     st.header("Data Overview")
-    st.subheader("B-cell Dataset")
     st.dataframe(df_bcell.head())
-    st.subheader("T-cell Dataset")
     st.dataframe(df_tcell.head())
-    st.subheader("SARS Dataset")
-    st.dataframe(df_sars.head())
-    st.subheader("COVID Test Dataset")
-    st.dataframe(df_test.head())
 
-# Step 7: Model Training Page
+# Step 8: Model Training
 elif page == "Model Training":
     st.header("Model Training")
     choice = st.selectbox("Select Prediction Type", ["B-cell", "T-cell"])
     df = df_train_b if choice == "B-cell" else df_train_t
     df = add_features(df)
-
-    FEATURE_COLUMNS = [
-        'protein_seq_length', 'parent_protein_id_length', 'peptide_length',
-        'chou_fasman', 'emini', 'kolaskar_tongaonkar', 'parker',
-        'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
-    ]
-
+    FEATURE_COLUMNS = ['protein_seq_length', 'parent_protein_id_length', 'peptide_length',
+                       'chou_fasman', 'emini', 'kolaskar_tongaonkar', 'parker',
+                       'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability']
     df = df.dropna(subset=['target'])
-    df = df.drop(columns=[col for col in ["parent_protein_id", "protein_seq", "peptide_seq"] if col in df.columns])
-
-    missing = [col for col in FEATURE_COLUMNS if col not in df.columns]
-    if missing:
-        st.error(f"Missing columns: {missing}")
-        st.stop()
 
     X = df[FEATURE_COLUMNS]
     Y = df["target"]
@@ -202,15 +187,11 @@ elif page == "Model Training":
         st.success("Model trained!")
         st.write("Accuracy:", accuracy_score(Y_test, Y_pred))
         st.text(classification_report(Y_test, Y_pred))
-
-        fig, ax = plt.subplots()
-        sns.heatmap(confusion_matrix(Y_test, Y_pred), annot=True, fmt='d', ax=ax)
-        st.pyplot(fig)
-
+        st.pyplot(sns.heatmap(confusion_matrix(Y_test, Y_pred), annot=True, fmt='d').figure)
         joblib.dump(model, f"{choice.lower()}-rf_model.pkl")
         joblib.dump(scaler, f"{choice.lower()}-scaler.pkl")
 
-# Step 8: Epitope Predictor (T-cell & B-cell)
+# Step 9: Prediction
 elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
     st.header("Epitope Prediction")
     model_type = "T-cell" if "T" in page else "B-cell"
@@ -222,117 +203,37 @@ elif page in ["T cell epitope predictor", "B cell epitope predictor"]:
 
     if uniprot_id:
         sequence, protein_name = fetch_sequence_from_uniprot(uniprot_id)
-        if not sequence:
-            st.warning("Could not fetch sequence from UniProt. Please paste it manually below.")
 
-    if st.button("Generate & Predict") and sequence.strip():
+    if st.button("Generate & Predict", key=f"predict_{model_type}") and sequence.strip():
         df = simulate_peptide_data(sequence, parent_id=protein_name, organism=organism)
         df = add_features(df)
 
         model_file = f"{model_type.lower()}-rf_model.pkl"
         scaler_file = f"{model_type.lower()}-scaler.pkl"
 
-        if not os.path.exists(model_file):
-            st.error("Train model first.")
-            st.stop()
-
         model = joblib.load(model_file)
         scaler = joblib.load(scaler_file)
 
-        feature_cols = [
-            'protein_seq_length', 'parent_protein_id_length', 'peptide_length',
-            'chou_fasman', 'emini', 'kolaskar_tongaonkar', 'parker',
-            'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability'
-        ]
-
-        if not all(col in df.columns for col in feature_cols):
-            st.error("Some features are missing.")
-            st.stop()
+        feature_cols = ['protein_seq_length', 'parent_protein_id_length', 'peptide_length',
+                        'chou_fasman', 'emini', 'kolaskar_tongaonkar', 'parker',
+                        'isoelectric_point', 'aromaticity', 'hydrophobicity', 'stability']
 
         X_pred = scaler.transform(df[feature_cols])
         df['prediction'] = model.predict(X_pred)
 
-        st.subheader("🔍 All Predicted Peptides")
+        # Show all predictions
+        st.subheader("All Predicted Peptides")
         st.dataframe(df)
 
-        # Show only epitope sequences in a separate table
-        st.subheader("Predicted Epitope Sequences")
-        epitope_seqs = predicted_epitopes[['peptide_seq']].drop_duplicates().reset_index(drop=True)
+        # Download full predictions
+        st.download_button("Download All Predictions", data=df.to_csv(index=False),
+                           file_name=f"{protein_name}_all_predictions.csv")
 
-        if not epitope_seqs.empty:
-          st.dataframe(epitope_seqs)
-          st.download_button(
-             label="Download Epitope Sequences",
-             data=epitope_seqs.to_csv(index=False),
-             file_name=f"{protein_name}_epitope_sequences.csv",
-             mime="text/csv"
-           )
-    else:
-          st.info("No epitope sequences to display.")
+        # Show only predicted epitopes
+        predicted_epitopes = df[df["prediction"] == 1]
+        st.subheader("Predicted Epitopes Only")
+        st.dataframe(predicted_epitopes)
 
- # Define and download predicted epitopes with all features
-    
-    if st.button("Generate & Predict") and sequence.strip():
-       df['prediction'] = model.predict(X_pred)
-
-    predicted_epitopes = df[df['prediction'] == 1]
-    st.subheader("Download Filtered Predictions (Predicted Epitopes Only)")
-    st.download_button(
-        label="Download CSV (Predicted Epitopes)",
-        data=predicted_epitopes.to_csv(index=False),
-        file_name=f"{protein_name}_predicted_epitopes.csv",
-        mime="text/csv"
-    )
-
-    st.subheader("Immunogenicity Score Distribution")
-    st.plotly_chart(px.box(df, y="immunogenicity_score", title="Immunogenicity Score Distribution"))
-
-    st.subheader("Stability Distribution")
-    st.plotly_chart(px.box(df, y="stability"))
-
-    st.subheader("Peptide Length Distribution (KDE Plot)")
-    plt.figure(figsize=(10, 6))
-    sns.kdeplot(df["peptide_length"], shade=True, color="skyblue", alpha=0.6)
-    plt.title("Peptide Length Distribution (KDE Plot)")
-    plt.xlabel("Peptide Length")
-    plt.ylabel("Density")
-    st.pyplot(plt)
-
-    st.subheader("Aromaticity Distribution")
-    st.plotly_chart(px.violin(df, y="aromaticity", box=True))
-
-    st.subheader("Distribution of Start and End Positions")
-    melted_df = df.melt(
-        id_vars=["prediction"],
-        value_vars=["start_position", "end_position"],
-        var_name="position_type",
-        value_name="position_value"
-    )
-    fig = px.violin(
-        melted_df,
-        x="position_type",
-        y="position_value",
-        color="prediction",
-        box=True,
-        points="all",
-        title="Start vs End Position Distribution by Prediction"
-    )
-    st.plotly_chart(fig)
-
-    st.subheader("Feature Correlation Heatmap")
-    corr = df[feature_cols + ['immunogenicity_score']].corr()
-    fig, ax = plt.subplots(figsize=(12, 10))
-    sns.heatmap(
-        corr,
-        annot=True,
-        fmt=".2f",
-        cmap="viridis",
-        linewidths=0.5,
-        linecolor='white',
-        cbar_kws={'shrink': 0.7},
-        square=True
-    )
-    ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
-    st.pyplot(fig)
-    ax.set_title("Correlation Matrix of Peptide Features", fontsize=16)
-    st.pyplot(fig)
+        # Download predicted epitopes
+        st.download_button("Download Predicted Epitopes", data=predicted_epitopes.to_csv(index=False),
+                           file_name=f"{protein_name}_predicted_epitopes.csv")
