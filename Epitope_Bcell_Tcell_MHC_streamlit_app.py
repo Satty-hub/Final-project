@@ -1,6 +1,7 @@
 # Epitope prediction tool using Streamlit and Python
 
 # Step 0: Imports
+import mhcflurry
 import streamlit as st
 import pandas as pd
 import numpy as np
