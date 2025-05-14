@@ -9,5 +9,4 @@ imbalanced-learn
 biopython
 joblib
 requests
-pip install mhcflurry
-mhcflurry-downloads fetch
+mhcflurry
