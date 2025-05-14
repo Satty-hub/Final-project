@@ -6,9 +6,19 @@ import pandas as pd
 import numpy as np
 import requests
 import os
-import subprocess
+import joblib
+import random
+import seaborn as sns
+import matplotlib.pyplot as plt
+import plotly.express as px
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.utils import shuffle
+from sklearn.impute import SimpleImputer
+from imblearn.over_sampling import SMOTE
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-from mhcflurry import Class1AffinityPredictor
 
 # Step 0.1: Page config and background
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
