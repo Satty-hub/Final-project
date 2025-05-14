@@ -20,6 +20,7 @@ from sklearn.utils import shuffle
 from sklearn.impute import SimpleImputer
 from imblearn.over_sampling import SMOTE
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from mhcflurry import Class1AffinityPredictor
 
 # Step 0.1: Page config and background
 st.set_page_config(layout="wide", page_title="Epitope Predictor")
